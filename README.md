@@ -3,7 +3,8 @@
 > A production-ready, multi-tenant SaaS platform for managing medical and non-medical assets in hospitals. Built with Go (backend) and React (frontend).
 
 <!-- Add screenshots here once available -->
-<!-- ![Dashboard](docs/screenshots/dashboard.png) -->
+
+![Dashboard](docs/screenshots/dashboard.png)
 
 ## Overview
 
@@ -24,18 +25,18 @@ SAMRS (Sistem Aset Manajemen Rumah Sakit) covers the full asset lifecycle — fr
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Backend | Go, Gin, GORM, PostgreSQL 15 |
-| Frontend | React 19, TypeScript, Vite, Redux Toolkit (RTK Query) |
-| Routing | TanStack Router |
-| UI | shadcn/ui, Tailwind CSS |
-| Forms | React Hook Form + Zod |
-| BFF | Node.js (Bun) |
-| Auth | JWT |
-| Logging | Zap (structured JSON) |
-| Monitoring | Prometheus + Grafana |
-| Container | Docker + Docker Compose |
+| Layer      | Technology                                            |
+| ---------- | ----------------------------------------------------- |
+| Backend    | Go, Gin, GORM, PostgreSQL 15                          |
+| Frontend   | React 19, TypeScript, Vite, Redux Toolkit (RTK Query) |
+| Routing    | TanStack Router                                       |
+| UI         | shadcn/ui, Tailwind CSS                               |
+| Forms      | React Hook Form + Zod                                 |
+| BFF        | Node.js (Bun)                                         |
+| Auth       | JWT                                                   |
+| Logging    | Zap (structured JSON)                                 |
+| Monitoring | Prometheus + Grafana                                  |
+| Container  | Docker + Docker Compose                               |
 
 ## Architecture
 
@@ -61,6 +62,7 @@ samrs-project/
 ## Quick Start
 
 ### Prerequisites
+
 - Docker & Docker Compose
 
 ### Run with Docker
@@ -118,13 +120,13 @@ go test -cover ./...
 
 ## Documentation
 
-| Doc | Description |
-|---|---|
-| [Backend Deep Dive](docs/BACKEND_DEEP_DIVE.md) | Clean architecture layers, patterns, error handling |
-| [Frontend Deep Dive](docs/FRONTEND_DEEP_DIVE.md) | Module structure, state management, routing |
-| [Database Schema](docs/DATABASE_SCHEMA.md) | Tables, relationships, indexing strategy |
-| [Auth & RBAC](docs/AUTH_RBAC.md) | JWT flow, permission model, middleware |
-| [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) | Setup, git workflow, code review checklist |
+| Doc                                                  | Description                                         |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| [Backend Deep Dive](docs/BACKEND_DEEP_DIVE.md)       | Clean architecture layers, patterns, error handling |
+| [Frontend Deep Dive](docs/FRONTEND_DEEP_DIVE.md)     | Module structure, state management, routing         |
+| [Database Schema](docs/DATABASE_SCHEMA.md)           | Tables, relationships, indexing strategy            |
+| [Auth & RBAC](docs/AUTH_RBAC.md)                     | JWT flow, permission model, middleware              |
+| [Development Workflow](docs/DEVELOPMENT_WORKFLOW.md) | Setup, git workflow, code review checklist          |
 
 ## License
 
