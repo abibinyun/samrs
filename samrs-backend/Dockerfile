@@ -26,6 +26,9 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /app/main .
 
+# Copy swagger docs
+COPY --from=builder /app/docs ./docs
+
 # Create directories
 RUN mkdir -p /app/uploads /app/logs
 
