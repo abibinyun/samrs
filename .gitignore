@@ -37,3 +37,18 @@ vendor/
 # Backup files
 *.sql.bak
 backup_*.sql
+
+# Secret tokens
+monitoring/metrics.token
+
+# AI/editor instruction files
+CLAUDE.md
+
+# Build artifacts
+stats.html
+
+# Internal dev notes (not for public)
+docs/frontend-analysis/
+dokumentasi-be/abstrak/
+DOKUMENTASI_PROJECT_SAMRS.md
+README_DOKUMENTASI.md
