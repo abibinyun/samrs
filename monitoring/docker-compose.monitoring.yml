@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    container_name: samrs-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./metrics.token:/etc/prometheus/metrics.token:ro   # <- mount token
+    ports:
+      - "9090:9090"
+    # environment tidak perlu lagi untuk token
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # <- supaya host.docker.internal bisa di-resolve dari container (Linux)
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: samrs-grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped

@@ -1,0 +1,24 @@
+# Ignore environment files
+
+.env
+
+# Ignore data directories
+
+postgres_data/
+pgadmin_data/
+prometheus_data/
+grafana_data/
+
+# Ignore logs
+
+logs/
+\*.log
+
+# Ignore uploads
+
+uploads/
+
+# Ignore build artifacts
+
+dist/
+build/

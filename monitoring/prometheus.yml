@@ -1,0 +1,12 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: samrs-api
+    metrics_path: /metrics
+    authorization:
+      type: Bearer
+      # path di dalam container Prometheus
+      credentials_file: /etc/prometheus/metrics.token
+    static_configs:
+      - targets: ["host.docker.internal:8080"]

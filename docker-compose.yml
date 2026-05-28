@@ -1,0 +1,168 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: samrs_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: samrs_user
+      POSTGRES_PASSWORD: samrs_password
+      POSTGRES_DB: samrs_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U samrs_user -d samrs_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - samrs_network
+
+  # Backend API (Go)
+  backend:
+    build:
+      context: ./samrs-backend
+      dockerfile: Dockerfile
+    container_name: samrs_backend
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    environment:
+      APP_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: samrs_user
+      DB_PASSWORD: samrs_password
+      DB_NAME: samrs_db
+      DB_SSLMODE: disable
+      SEED_TENANT_NAME: ${SEED_TENANT_NAME:-RS Pusat Utama}
+      SEED_TENANT_SLUG: ${SEED_TENANT_SLUG:-rs-pusat}
+      SEED_TENANT_STATUS: ${SEED_TENANT_STATUS:-active}
+      SEED_ADMIN_USERNAME: ${SEED_ADMIN_USERNAME:-admin}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-password123}
+      LOGIN_RATE_LIMIT: 2
+      LOGIN_RATE_BURST: 5
+      API_RATE_LIMIT: 10
+      API_RATE_BURST: 20
+      METRICS_TOKEN: ${METRICS_TOKEN:-secret-metrics-token}
+      LOG_FILE: ./logs/samrs.log
+    volumes:
+      - ./samrs-backend/uploads:/app/uploads
+      - ./samrs-backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - samrs_network
+
+  # BFF (Backend for Frontend)
+  bff:
+    build:
+      context: ./samrs-frontend/apps/bff
+      dockerfile: Dockerfile
+    container_name: samrs_bff
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GO_SERVICE_URL: http://backend:8080
+    depends_on:
+      - backend
+    networks:
+      - samrs_network
+
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./samrs-frontend
+      dockerfile: Dockerfile
+    container_name: samrs_frontend
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      VITE_API_URL: http://localhost:3000
+    depends_on:
+      - bff
+    networks:
+      - samrs_network
+
+  # pgAdmin (Optional - Database Management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: samrs_pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@samrs.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "8081:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - samrs_network
+    profiles:
+      - tools
+
+  # Prometheus (Metrics)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: samrs_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    depends_on:
+      - backend
+    networks:
+      - samrs_network
+    profiles:
+      - monitoring
+
+  # Grafana (Dashboard)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: samrs_grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: ''
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prometheus
+    networks:
+      - samrs_network
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  samrs_network:
+    driver: bridge

@@ -1,0 +1,39 @@
+# Environment variables - NEVER commit these
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Uploads / user-generated files
+uploads/
+
+# Database volumes
+postgres_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Node
+node_modules/
+dist/
+out/
+.cache/
+*.tsbuildinfo
+
+# Go
+*.exe
+*.test
+vendor/
+
+# Backup files
+*.sql.bak
+backup_*.sql
