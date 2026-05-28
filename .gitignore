@@ -49,6 +49,12 @@ stats.html
 
 # Internal dev notes (not for public)
 docs/frontend-analysis/
-dokumentasi-be/abstrak/
+docs/backend-testing/
+dokumentasi-be/
+dokumentasi-fe/
+DOCKER_README.md
+DOKUMENTASI_PROJECT_SAMRS.md
+README_DOKUMENTASI.md
+samrs-backend/docs/PROJECT_STATUS*.md
 DOKUMENTASI_PROJECT_SAMRS.md
 README_DOKUMENTASI.md
