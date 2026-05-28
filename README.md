@@ -64,41 +64,54 @@ samrs-project/
 ### Prerequisites
 
 - Docker & Docker Compose
+- Go (for seeding only — see below)
 
 ### Run with Docker
 
 ```bash
-# 1. Copy and configure environment
+# 1. Clone the repo
+git clone https://github.com/abibinyun/samrs.git
+cd samrs
+
+# 2. Copy environment file
 cp .env.example .env
 
-# 2. Start all services
+# 3. Start all services
 make up
 
-# 3. Seed initial data (first run)
-make seed
+# 4. Seed initial data (first run only)
+#    Requires Go installed on your machine
+cd samrs-backend
+cp .env.example .env
+go run cmd/seed/main.go
 ```
+
+Default login: `admin` / `password123`
 
 Services:
 | Service | URL |
 |---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8080 |
-| API Docs (Swagger) | http://localhost:8080/swagger |
+| Frontend | http://localhost:8000 |
+| Backend API | http://localhost:8090 |
+| API Docs (Swagger) | http://localhost:8090/swagger |
 | pgAdmin | http://localhost:8081 |
 | Grafana | http://localhost:3001 |
 
 ### Run without Docker
 
 ```bash
-# Backend
-cd samrs-backend
-cp .env.example .env   # configure DB credentials
-go run cmd/api/main.go
+# 1. Start PostgreSQL (or use your own instance)
 
-# Frontend
+# 2. Backend
+cd samrs-backend
+cp .env.example .env        # fill in DB credentials
+go run cmd/api/main.go      # starts on :8080
+go run cmd/seed/main.go     # seed initial data (first run)
+
+# 3. Frontend
 cd samrs-frontend
 bun install
-bun run dev
+bun run dev                 # starts on :5173
 ```
 
 ## API Documentation
