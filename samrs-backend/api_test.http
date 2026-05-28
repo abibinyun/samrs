@@ -1,0 +1,1083 @@
+### =========================================================================
+### SAMRS API TEST SUITE
+### =========================================================================
+
+### Variables
+@baseUrl = http://localhost:8080
+
+### -------------------------------------------------------------------------
+### 1. AUTHENTICATION & CONNECTIVITY
+### -------------------------------------------------------------------------
+
+### 1.1 Public Ping
+# Mengetes konektivitas dasar dan status server
+GET {{baseUrl}}/ping
+Accept: application/json
+
+###
+
+### 1.2 Login (Dapatkan Token)
+# @name login
+# Gunakan data dari Seeder: admin / password123
+POST {{baseUrl}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "password123"
+}
+
+### Ambil token dari response login ke variabel dinamis
+@authToken = {{login.response.body.data.token}}
+
+###
+
+### 1.3 Secure Ping (Skenario Sukses)
+# Mengetes apakah Middleware berhasil membaca JWT dan mengekstrak TenantID
+GET {{baseUrl}}/api/v1/secure-ping
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+######
+
+### 1.3 Secure Ping (Skenario Sukses)
+# Mengetes apakah Middleware berhasil membaca JWT dan mengekstrak TenantID
+GET {{baseUrl}}/api/v1/auth/me
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 1.4 Secure Ping (Gagal - Tanpa Token)
+# Ekspektasi: 401 Unauthorized
+GET {{baseUrl}}/api/v1/secure-ping
+Accept: application/json
+
+###
+
+### 1.5 Secure Ping (Gagal - Token Salah)
+# Ekspektasi: 401 Unauthorized
+GET {{baseUrl}}/api/v1/secure-ping
+Authorization: Bearer token_salah_disini
+Accept: application/json
+
+
+### -------------------------------------------------------------------------
+### 2. ROOM MANAGEMENT
+### -------------------------------------------------------------------------
+
+# TODO:
+# Detail Location for tracking asset must be add (building / floor / room / bed)
+
+### 2.1 Create Room
+# @name createRoom
+POST {{baseUrl}}/api/v1/rooms
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Ruang Melati 500",
+    "code": "Mlt-500",
+    "location": "Gedung Kedua Lantai 50"
+}
+
+### Simpan UUID Ruangan dari response secara dinamis
+@roomId = {{createRoom.response.body.data.id}}
+
+###
+
+### 2.2 Get All Rooms
+GET {{baseUrl}}/api/v1/rooms
+Authorization: Bearer {{authToken}}
+
+###
+
+### 2.3 Get Room By ID
+GET {{baseUrl}}/api/v1/rooms/{{roomId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 2.4 Update Room
+PATCH {{baseUrl}}/api/v1/rooms/{{roomId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Ruang Melati 3000",
+    "code": "Mlt-3000",
+    "location": "Gedung Kedua Lantai 300"
+}
+
+
+### -------------------------------------------------------------------------
+### 3. BED MANAGEMENT
+### -------------------------------------------------------------------------
+
+### 3.1 Create Bed (Sukses)
+# Membuat Bed yang terikat pada RoomID yang baru saja dibuat
+# @name createBed
+POST {{baseUrl}}/api/v1/beds
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "room_id": "{{roomId}}",
+    "code": "BED-MWR-100-01"
+}
+
+### Simpan ID Bed dari response
+@bedId = {{createBed.response.body.data.id}}
+
+###
+
+### 3.2 Create Bed (Gagal - Room ID Ngawur)
+# Ekspektasi: 500/404 dengan pesan "ruangan tidak ditemukan atau akses ditolak"
+POST {{baseUrl}}/api/v1/beds
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "room_id": "00000000-0000-0000-0000-000000000000",
+    "code": "BED-ERROR"
+}
+
+###
+
+### 3.3 Get Beds (By Room)
+GET {{baseUrl}}/api/v1/beds?room_id={{roomId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 3.4 Get Bed By ID
+GET {{baseUrl}}/api/v1/beds/{{bedId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 3.5 Update Bed
+PATCH {{baseUrl}}/api/v1/beds/{{bedId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "room_id": "{{roomId}}",
+    "code": "BED-MWR-100-01",
+    "status": "maintenance"
+}
+
+
+### -------------------------------------------------------------------------
+### 4. ASSET CATEGORY MANAGEMENT
+### -------------------------------------------------------------------------
+
+### 4.1 Create Category (Life Support)
+# @name createCategory
+POST {{baseUrl}}/api/v1/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Life Support",
+    "description": "Alat medis kritis untuk penunjang hidup (Ventilator, Defibrillator, dll)"
+}
+
+### Simpan ID Kategori dari response secara dinamis (untuk Inventory nanti)
+@categoryId = {{createCategory.response.body.data.id}}
+
+###
+
+### 4.2 Create Category (Imaging Diagnostic)
+POST {{baseUrl}}/api/v1/categories
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Tools Diagnostic",
+    "description": "Alat pemindai medis (USG, X-Ray, MRI)"
+}
+
+###
+
+### 4.3 Get All Categories
+GET {{baseUrl}}/api/v1/categories
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 4.4 Get Category By ID
+GET {{baseUrl}}/api/v1/categories/{{categoryId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 4.5 Update Category
+PATCH {{baseUrl}}/api/v1/categories/{{categoryId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Support Life",
+    "description": "Alat medis kritis untuk penunjang hidup"
+}
+
+# TODO:
+### 4.5.1 Grouping Category
+
+###
+
+### -------------------------------------------------------------------------
+### 4.6 VENDOR/BRAND/MODEL/STATUS
+### -------------------------------------------------------------------------
+
+### 4.6.1 Create Vendor
+# @name createVendor
+POST {{baseUrl}}/api/v1/vendors
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "code": "PHILIPS-1",
+    "name": "PT Philips Indonesia",
+    "contact_name": "Budi",
+    "phone": "021-123456",
+    "email": "support@philips.co.id",
+    "address": "Jakarta"
+}
+
+### Simpan ID Vendor dari response
+@vendorId = {{createVendor.response.body.data.id}}
+
+###
+
+### 4.6.2 Get All Vendors
+GET {{baseUrl}}/api/v1/vendors
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 4.6.3 Create Brand
+# @name createBrand
+POST {{baseUrl}}/api/v1/brands
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "code": "PHILIPS-2",
+    "name": "Philips",
+    "description": "Merek alat medis"
+}
+
+### Simpan ID Brand dari response
+@brandId = {{createBrand.response.body.data.id}}
+
+###
+
+### 4.6.4 Create Model
+# @name createModel
+POST {{baseUrl}}/api/v1/models
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "brand_id": {{brandId}},
+    "code": "V60-1",
+    "name": "V60",
+    "description": "Ventilator series"
+}
+
+### Simpan ID Model dari response
+@modelId = {{createModel.response.body.data.id}}
+
+###
+
+### 4.6.5 Create Asset Status
+# @name createAssetStatus
+POST {{baseUrl}}/api/v1/asset-statuses
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "code": "ready-21",
+    "name": "Ready Tomoorow"
+}
+
+### Simpan ID Status dari response
+@assetStatusId = {{createAssetStatus.response.body.data.id}}
+
+
+### -------------------------------------------------------------------------
+### 5. ASSET INVENTORY
+### -------------------------------------------------------------------------
+
+### 5.1 Create Asset (Ventilator)
+# @name createAsset
+POST {{baseUrl}}/api/v1/assets
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "category_id": {{categoryId}},
+    "room_id": "{{roomId}}",
+    "bed_id": {{bedId}},
+    "vendor_id": {{vendorId}},
+    "brand_id": {{brandId}},
+    "model_id": {{modelId}},
+    "code": "VENT-003-4",
+    "name": "Ventilator Philips V60",
+    "brand": "Philips",
+    "model": "V60",
+    "status": "ready",
+    "purchase_date": "2024-01-15"
+}
+
+### Simpan ID Asset dari response
+@assetId = {{createAsset.response.body.data.id}}
+@assetCode = {{createAsset.response.body.data.code}}
+@tenantSlug = rs-pusat
+
+###
+
+### 5.2 Get All Assets
+GET {{baseUrl}}/api/v1/assets
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.3 Get Asset By ID
+GET {{baseUrl}}/api/v1/assets/{{assetId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.3.1 Get Asset Timeline
+GET {{baseUrl}}/api/v1/assets/{{assetId}}/timeline?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.3.1 Get Asset QR (PNG)
+GET {{baseUrl}}/api/v1/assets/{{assetId}}/qr?size=256
+Authorization: Bearer {{authToken}}
+Accept: image/png
+
+###
+
+### 5.3.2 Public Asset (QR scan)
+GET {{baseUrl}}/public/tenants/{{tenantSlug}}/assets/{{assetCode}}
+Accept: application/json
+
+###
+
+### 5.4 Update Asset
+PATCH {{baseUrl}}/api/v1/assets/{{assetId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "category_id": {{categoryId}},
+    "room_id": "{{roomId}}",
+    "bed_id": {{bedId}},
+    "vendor_id": {{vendorId}},
+    "brand_id": {{brandId}},
+    "model_id": {{modelId}},
+    "code": "VENT-001",
+    "name": "Ventilator Philips V60",
+    "brand": "Philips",
+    "model": "V60",
+    "status": "ready",
+    "purchase_date": "2024-01-15"
+}
+
+
+### -------------------------------------------------------------------------
+### 5.5 COMPLAINT / WORK ORDER
+### -------------------------------------------------------------------------
+
+### TODO:
+### Status Complaint
+### Can CRUD status new/done/proces (need priority)
+
+### 5.5.1 Create Complaint
+# @name createComplaint
+POST {{baseUrl}}/api/v1/complaints
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "asset_id": "{{assetId}}",
+    "title": "Ventilator mati total",
+    "description": "Unit tidak menyala sejak pagi, perlu pengecekan teknisi."
+}
+
+### Simpan ID Complaint dari response
+@complaintId = {{createComplaint.response.body.data.id}}
+
+###
+
+### 5.5.2 Get All Complaints
+GET {{baseUrl}}/api/v1/complaints?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.5.3 Get Complaint By ID
+GET {{baseUrl}}/api/v1/complaints/{{complaintId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.5.4 Update Complaint (status)
+### Status complain can update (done) with permission from user or not (optional)
+PATCH {{baseUrl}}/api/v1/complaints/{{complaintId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "status": "in_progress",
+    "resolution_note": "Sedang dicek teknisi."
+}
+
+###
+
+
+### -------------------------------------------------------------------------
+### 5.6 MAINTENANCE & CALIBRATION
+### -------------------------------------------------------------------------
+
+### 5.6.1 Create Maintenance Schedule
+# @name createMaintenance
+POST {{baseUrl}}/api/v1/maintenance-schedules
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "asset_id": "{{assetId}}",
+    "schedule_type": "maintenance",
+    "title": "Maintenance bulanan",
+    "interval_days": 30,
+    "next_due_date": "2024-02-15",
+    "status": "scheduled",
+    "notes": "Checklist standar"
+}
+
+### Simpan ID Schedule dari response
+@maintenanceId = {{createMaintenance.response.body.data.id}}
+
+###
+
+### 5.6.2 Get All Maintenance Schedules
+GET {{baseUrl}}/api/v1/maintenance-schedules?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.6.3 Get Maintenance Schedule By ID
+GET {{baseUrl}}/api/v1/maintenance-schedules/{{maintenanceId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.6.4 Complete Maintenance Schedule
+PATCH {{baseUrl}}/api/v1/maintenance-schedules/{{maintenanceId}}/complete
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "note": "Maintenance selesai, unit normal."
+}
+
+###
+
+
+### -------------------------------------------------------------------------
+### 5.6.6 MAINTENANCE DOCUMENTS (MANUAL TESTING MULTIPART)  
+### -------------------------------------------------------------------------
+
+### 5.6.6.1 Upload Document (contoh multipart)
+# Ganti path file sesuai lokasi file di mesinmu
+POST {{baseUrl}}/api/v1/maintenance-schedules/{{maintenanceId}}/documents
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=----SAMRSFormBoundary
+
+------SAMRSFormBoundary
+Content-Disposition: form-data; name="doc_type"
+
+certificate
+------SAMRSFormBoundary
+Content-Disposition: form-data; name="file"; filename="certificate.pdf"
+Content-Type: application/pdf
+
+< ./fixtures/certificate.pdf
+------SAMRSFormBoundary--
+
+###
+
+### 5.6.6.2 List Documents
+# @name listMaintenanceDocs
+GET {{baseUrl}}/api/v1/maintenance-schedules/{{maintenanceId}}/documents
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### Simpan ID dokumen maintenance dari response list
+@docId = {{listMaintenanceDocs.response.body.data.0.id}}
+
+###
+
+### 5.6.6.3 Download Document
+# Ganti {docId} dari response list
+GET {{baseUrl}}/api/v1/maintenance-documents/{{docId}}/download
+Authorization: Bearer {{authToken}}
+Accept: application/octet-stream
+
+###
+
+### 5.6.6.4 Delete Document
+DELETE {{baseUrl}}/api/v1/maintenance-documents/{{docId}}
+Authorization: Bearer {{authToken}}
+
+
+### -------------------------------------------------------------------------
+### 5.9 ASSET MUTATION
+### -------------------------------------------------------------------------
+
+### 5.9.1 Create Asset Mutation
+# @name createMutation
+POST {{baseUrl}}/api/v1/asset-mutations
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "asset_id": "{{assetId}}",
+    "room_id": "{{roomId}}",
+    "bed_id": {{bedId}},
+    "reason": "Mutasi ke ruangan lain"
+}
+
+### Simpan ID Mutation dari response
+@mutationId = {{createMutation.response.body.data.mutation.id}}
+
+###
+
+### 5.9.2 Get All Mutations
+GET {{baseUrl}}/api/v1/asset-mutations?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.9.3 Get Mutation By ID
+GET {{baseUrl}}/api/v1/asset-mutations/{{mutationId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+
+### -------------------------------------------------------------------------
+### 5.10 STOCK OPNAME
+### -------------------------------------------------------------------------
+
+### 5.10.1 Create Stock Opname Session
+# @name createOpname
+POST {{baseUrl}}/api/v1/stock-opnames
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "title": "Stock Opname Q1",
+    "opname_at": "2024-03-31",
+    "notes": "Opname rutin"
+}
+
+### Simpan ID Session dari response
+@opnameId = {{createOpname.response.body.data.id}}
+
+###
+
+### 5.10.2 Add Stock Opname Item
+POST {{baseUrl}}/api/v1/stock-opnames/{{opnameId}}/items
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "asset_id": "{{assetId}}",
+    "condition": "match",
+    "note": "OK"
+}
+
+###
+
+### 5.10.3 List Stock Opname Sessions
+GET {{baseUrl}}/api/v1/stock-opnames?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.10.4 List Stock Opname Items
+GET {{baseUrl}}/api/v1/stock-opnames/{{opnameId}}/items
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 5.10.5 Close Stock Opname Session
+PATCH {{baseUrl}}/api/v1/stock-opnames/{{opnameId}}/close
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+
+### -------------------------------------------------------------------------
+### 5.7 REPORT EXPORT
+### -------------------------------------------------------------------------
+
+### 5.7.1 Export Assets CSV
+GET {{baseUrl}}/api/v1/reports/assets/export?date_from=&date_to=&format=csv
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.1.0 Export Assets CSV (Custom Fields)
+GET {{baseUrl}}/api/v1/reports/assets/export?format=csv&fields=code,name,status,created_at&columns=code:Kode,name:Nama,status:Status,created_at:Dibuat
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.1.1 Export Assets XLSX
+GET {{baseUrl}}/api/v1/reports/assets/export?date_from=&date_to=&format=xlsx
+Authorization: Bearer {{authToken}}
+Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+### 5.7.1.2 Export Assets PDF
+GET {{baseUrl}}/api/v1/reports/assets/export?date_from=&date_to=&format=pdf
+Authorization: Bearer {{authToken}}
+Accept: application/pdf
+
+###
+
+### 5.7.2 Export Complaints CSV
+GET {{baseUrl}}/api/v1/reports/complaints/export?date_from=&date_to=&format=csv
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.2.0 Export Complaints CSV (Custom Fields)
+GET {{baseUrl}}/api/v1/reports/complaints/export?format=csv&fields=asset_code,title,status,created_at
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.2.1 Export Complaints XLSX
+GET {{baseUrl}}/api/v1/reports/complaints/export?date_from=&date_to=&format=xlsx
+Authorization: Bearer {{authToken}}
+Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+### 5.7.2.2 Export Complaints PDF
+GET {{baseUrl}}/api/v1/reports/complaints/export?date_from=&date_to=&format=pdf
+Authorization: Bearer {{authToken}}
+Accept: application/pdf
+
+###
+
+### 5.7.3 Export Maintenance Schedules CSV
+GET {{baseUrl}}/api/v1/reports/maintenance-schedules/export?date_from=&date_to=&format=csv
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.3.0 Export Maintenance CSV (Custom Fields)
+GET {{baseUrl}}/api/v1/reports/maintenance-schedules/export?format=csv&fields=asset_code,title,status,next_due_date
+Authorization: Bearer {{authToken}}
+Accept: text/csv
+
+### 5.7.3.1 Export Maintenance Schedules XLSX
+GET {{baseUrl}}/api/v1/reports/maintenance-schedules/export?date_from=&date_to=&format=xlsx
+Authorization: Bearer {{authToken}}
+Accept: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+### 5.7.3.2 Export Maintenance Schedules PDF
+GET {{baseUrl}}/api/v1/reports/maintenance-schedules/export?date_from=&date_to=&format=pdf
+Authorization: Bearer {{authToken}}
+Accept: application/pdf
+
+
+### -------------------------------------------------------------------------
+### 5.8 NOTIFICATIONS
+### -------------------------------------------------------------------------
+
+### TODO:
+### Notif Handler for all (Staff / Internal)
+### Using this method
+
+### 5.8.1 Send Notification (noop)
+POST {{baseUrl}}/api/v1/notifications/send
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "channel": "email",
+    "to": "user@rscontoh.id",
+    "subject": "Pengingat Maintenance",
+    "message": "Jadwal maintenance jatuh tempo hari ini."
+}
+
+
+### -------------------------------------------------------------------------
+### 6. RBAC MANAGEMENT
+### -------------------------------------------------------------------------
+
+### 6.1 Get Permissions
+GET {{baseUrl}}/api/v1/permissions
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 6.2 Create Role
+# @name createRole
+POST {{baseUrl}}/api/v1/roles
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "name": "Operator 1"
+}
+
+### Simpan Role ID
+@roleId = {{createRole.response.body.data.id}}
+
+###
+
+### 6.2b Get Role By ID
+GET {{baseUrl}}/api/v1/roles/{{roleId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 6.2c Set Tenant Admin Flag (Super Admin Only)
+PATCH {{baseUrl}}/api/v1/roles/{{roleId}}/tenant-admin
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "is_tenant_admin": true
+}
+
+###
+
+### 6.3 Assign Permissions to Role
+POST {{baseUrl}}/api/v1/roles/{{roleId}}/permissions
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "permission_ids": [1,2,3]
+}
+
+###
+
+### 6.4 Get Permissions By Role
+GET {{baseUrl}}/api/v1/roles/{{roleId}}/permissions
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 6.5 Create User
+# @name createUser
+POST {{baseUrl}}/api/v1/users
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "username": "operator1",
+    "password": "password123",
+    "role_id": 3,
+    "is_active": true
+}
+
+### Simpan User ID
+@userId = {{createUser.response.body.data.id}}
+
+###
+
+### 6.6 List Users (Paged)
+GET {{baseUrl}}/api/v1/users?page=1&per_page=20&search=
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 6.7 Update User Profile
+PATCH {{baseUrl}}/api/v1/users/{{userId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "username": "operator1-updated"
+}
+
+###
+
+### 6.8 Update User Role
+PATCH {{baseUrl}}/api/v1/users/{{userId}}/role
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "role_id": {{roleId}}
+}
+
+###
+
+### 6.9 Update User Status
+PATCH {{baseUrl}}/api/v1/users/{{userId}}/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "is_active": true
+}
+
+###
+
+### 6.10 Reset User Password
+PATCH {{baseUrl}}/api/v1/users/{{userId}}/password
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+    "password": "password456"
+}
+
+###
+
+### 6.11 Delete User
+DELETE {{baseUrl}}/api/v1/users/{{userId}}
+Authorization: Bearer {{authToken}}
+
+
+### -------------------------------------------------------------------------
+### 7. CLEANUP
+### -------------------------------------------------------------------------
+
+### 7.1 Delete Complaint
+DELETE {{baseUrl}}/api/v1/complaints/{{complaintId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 7.2 Delete Maintenance Schedule
+DELETE {{baseUrl}}/api/v1/maintenance-schedules/{{maintenanceId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 7.3 Delete Asset
+DELETE {{baseUrl}}/api/v1/assets/{{assetId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 7.4 Delete Category
+DELETE {{baseUrl}}/api/v1/categories/{{categoryId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 7.5 Delete Bed
+DELETE {{baseUrl}}/api/v1/beds/{{bedId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### 7.6 Delete Room
+DELETE {{baseUrl}}/api/v1/rooms/{{roomId}}
+Authorization: Bearer {{authToken}}
+
+
+### -------------------------------------------------------------------------
+### 8. AUDIT TRAIL
+### -------------------------------------------------------------------------
+
+### 8.1 Get Audit Trails
+# @name listAudit
+GET {{baseUrl}}/api/v1/audit-trails?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### Simpan ID audit dari response list
+@auditId = {{listAudit.response.body.data.0.id}}
+
+###
+
+### 8.2 Get Audit Trail By ID (contoh)
+# Ganti {auditId} dengan ID yang ada di response list
+GET {{baseUrl}}/api/v1/audit-trails/{{auditId}}
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+
+### -------------------------------------------------------------------------
+### 9. ADMIN TENANTS
+### -------------------------------------------------------------------------
+
+### 9.1 Create Tenant (Super Admin Only)
+# @name createTenant
+POST {{baseUrl}}/api/v1/admin/tenants
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "RS Cabang Selatan",
+  "slug": "rs-cabang-selatan",
+  "address": "Jl. Kesehatan No. 12",
+  "type": "hospital",
+  "status": "active"
+}
+
+### Simpan ID tenant dari response create
+@tenantId = {{createTenant.response.body.data.id}}
+
+###
+
+### 9.2 Get Tenants With Roles (Super Admin Only)
+GET {{baseUrl}}/api/v1/admin/tenants?page=1&per_page=20&sort_by=created_at&sort_dir=desc
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 9.3 Get Tenant Detail (Super Admin Only)
+# Ganti {tenantId} dengan ID tenant dari response create
+GET {{baseUrl}}/api/v1/admin/tenants/{{tenantId}}?user_page=1&user_per_page=20&user_search=&role_page=1&role_per_page=20&role_search=
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+###
+
+### 9.4 Update Tenant (Super Admin Only)
+# Ganti {tenantId} dengan ID tenant yang ingin diubah
+PATCH {{baseUrl}}/api/v1/admin/tenants/{{tenantId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "RS Cabang Selatan Updated",
+  "slug": "rs-cabang-selatan-updated",
+  "address": "Jl. Kesehatan No. 15",
+  "type": "hospital"
+}
+
+###
+
+### 9.5 Update Tenant Status (Super Admin Only)
+# Status: active | suspended
+PATCH {{baseUrl}}/api/v1/admin/tenants/{{tenantId}}/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "suspended"
+}
+
+
+### -------------------------------------------------------------------------
+### 10. DOCUMENT MANAGEMENT (GLOBAL)
+### -------------------------------------------------------------------------
+
+### 10.1 Create Document (Multi-file)
+# @name createDocument
+POST {{baseUrl}}/api/v1/documents
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=doc-boundary
+
+--doc-boundary
+Content-Disposition: form-data; name="title"
+
+SOP Pemeliharaan Ventilator
+--doc-boundary
+Content-Disposition: form-data; name="doc_type"
+
+sop
+--doc-boundary
+Content-Disposition: form-data; name="description"
+
+Dokumen SOP dan lampiran pendukung
+--doc-boundary
+Content-Disposition: form-data; name="files"; filename="sop.pdf"
+Content-Type: application/pdf
+
+< ./fixtures/sop.pdf
+--doc-boundary
+Content-Disposition: form-data; name="files"; filename="lampiran.pdf"
+Content-Type: application/pdf
+
+< ./fixtures/lampiran.pdf
+--doc-boundary--
+
+### Simpan ID dokumen dari response
+@documentId = {{createDocument.response.body.data.id}}
+
+### 10.2 List Documents
+GET {{baseUrl}}/api/v1/documents?search=SOP&doc_type=sop
+Authorization: Bearer {{authToken}}
+
+### 10.3 Get Document By ID
+GET {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{authToken}}
+
+### 10.4 Update Document Metadata
+PATCH {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "SOP Pemeliharaan Ventilator (Revisi)",
+  "doc_type": "sop",
+  "description": "Revisi update SOP 2026"
+}
+
+### 10.5 Add Files to Document
+POST {{baseUrl}}/api/v1/documents/{{documentId}}/files
+Authorization: Bearer {{authToken}}
+Content-Type: multipart/form-data; boundary=doc-files
+
+--doc-files
+Content-Disposition: form-data; name="files"; filename="revisi.pdf"
+Content-Type: application/pdf
+
+< ./fixtures/revisi.pdf
+--doc-files--
+
+### 10.6 List Document Files
+# @name listDocumentFiles
+GET {{baseUrl}}/api/v1/documents/{{documentId}}/files
+Authorization: Bearer {{authToken}}
+
+### Simpan ID file dari response list
+@fileId = {{listDocumentFiles.response.body.data.0.id}}
+
+### 10.7 Download Document File
+# Ganti {fileId} dengan ID file dari response list
+GET {{baseUrl}}/api/v1/document-files/{{fileId}}/download
+Authorization: Bearer {{authToken}}
+
+### 10.8 Delete Document File
+DELETE {{baseUrl}}/api/v1/document-files/{{fileId}}
+Authorization: Bearer {{authToken}}
+
+### 10.9 Delete Document
+DELETE {{baseUrl}}/api/v1/documents/{{documentId}}
+Authorization: Bearer {{authToken}}
+
+# TODO:
+# CRUD Custom Form dynamic for create schedule / monitoring
