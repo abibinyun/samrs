@@ -79,6 +79,9 @@ cp .env.example .env
 # 3. Start all services
 make up
 
+# Optional: include Prometheus + Grafana monitoring
+make up-monitoring
+
 # 4. Seed initial data (first run only)
 #    Requires Go installed on your machine
 cd samrs-backend
@@ -95,7 +98,8 @@ Services:
 | Backend API | http://localhost:8090 |
 | API Docs (Swagger) | http://localhost:8090/swagger |
 | pgAdmin | http://localhost:8081 |
-| Grafana | http://localhost:3001 |
+| Prometheus | http://localhost:9090 *(monitoring profile)* |
+| Grafana | http://localhost:3001 *(monitoring profile, admin/admin)* |
 
 ### Run without Docker
 
