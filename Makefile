@@ -54,7 +54,7 @@ ps: ## Show running services
 	docker-compose ps
 
 seed: ## Run database seed
-	docker-compose exec backend sh -c "cd /app && ./main seed"
+	docker compose exec backend ./seed
 
 test: ## Run backend tests
 	docker-compose exec backend go test ./...

@@ -64,7 +64,6 @@ samrs-project/
 ### Prerequisites
 
 - Docker & Docker Compose
-- Go (for seeding only — see below)
 
 ### Run with Docker
 
@@ -83,10 +82,7 @@ make up
 make up-monitoring
 
 # 4. Seed initial data (first run only)
-#    Requires Go installed on your machine
-cd samrs-backend
-cp .env.example .env
-go run cmd/seed/main.go
+make seed
 ```
 
 Default login: `admin` / `password123`

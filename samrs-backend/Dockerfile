@@ -15,6 +15,7 @@ COPY . .
 
 # Build binary
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main ./cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o seed ./cmd/seed
 
 # Final stage
 FROM alpine:latest
@@ -23,8 +24,9 @@ RUN apk --no-cache add ca-certificates tzdata
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binaries from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/seed .
 
 # Copy swagger docs
 COPY --from=builder /app/docs ./docs
