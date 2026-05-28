@@ -4,7 +4,10 @@ info:
   version: "1.0.0"
   description: Sistem Manajemen Aset Rumah Sakit (MVP)
 servers:
+  - url: http://localhost:8090
+    description: Local (Docker)
   - url: http://localhost:8080
+    description: Local (without Docker)
 security:
   - bearerAuth: []
 paths:
