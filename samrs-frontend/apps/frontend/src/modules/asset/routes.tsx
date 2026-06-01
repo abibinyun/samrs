@@ -3,6 +3,8 @@ import { createRoute, lazyRouteComponent } from "@tanstack/react-router";
 import { SCOPES } from "@/constants";
 import { requirePermission } from "@/lib/routeGuard";
 import { TableSkeleton } from "@/components/commons/data-table/TableSkeleton";
+import { AssetDetailPage } from "./pages/AssetDetailPage";
+import { AssetUpdatePage } from "./pages/AssetUpdatePage";
 
 export const assetRoutes = [
   createRoute({ 
@@ -31,19 +33,13 @@ export const assetRoutes = [
     getParentRoute: () => tenantRoute,
     path: "assets/$id",
     beforeLoad: () => requirePermission(SCOPES.ASSET.READ),
-    component: lazyRouteComponent(() =>
-      import("./pages/AssetDetailPage")
-    ),
-    pendingMs: 300,
+    component: AssetDetailPage,
   }),
 
   createRoute({
     getParentRoute: () => tenantRoute,
     path: "assets/$id/edit",
     beforeLoad: () => requirePermission(SCOPES.ASSET.UPDATE),
-    component: lazyRouteComponent(() =>
-      import("./pages/AssetUpdatePage")
-    ),
-    pendingMs: 300,
+    component: AssetUpdatePage,
   }),
 ];

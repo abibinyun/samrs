@@ -27,7 +27,8 @@ export type Asset = {
   };
   bed?: {
     id: number;
-    name: string;
+    code?: string;
+    name?: string;
   };
   vendor?: {
     id: number;

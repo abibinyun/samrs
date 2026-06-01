@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import PageContainer from "@/components/commons/containers/PageContainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,10 +20,21 @@ import {
 } from "@/components/ui/alert-dialog";
 import AssetQrDialog from "../components/AssetQrDialog";
 
+function parsePath() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const idx = parts.indexOf("assets");
+  return {
+    tenant: parts[0] || "",
+    id: idx >= 0 ? parts[idx + 1] : undefined,
+  };
+}
+
 export function AssetDetailPage() {
-  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
-  const { data, isLoading, error, refetch } = useGetAssetByIdQuery(id!);
+  const { tenant, id } = parsePath();
+  console.log("[AssetDetailPage] render", { id, tenant, pathname: window.location.pathname });
+  const { data: asset, isLoading, error, refetch } = useGetAssetByIdQuery(id!, { skip: !id });
+  console.log("[AssetDetailPage] query", { isLoading, hasData: !!asset, error: error ? String(error) : null });
   const [deleteAsset, { isLoading: isDeleting }] = useDeleteAssetMutation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showQrDialog, setShowQrDialog] = useState(false);
@@ -32,7 +43,7 @@ export function AssetDetailPage() {
     try {
       await deleteAsset(id).unwrap();
       toast.success("Asset deleted successfully");
-      navigate({ to: "/assets" });
+      navigate({ to: `/${tenant}/assets` });
     } catch (error: any) {
       const message = error?.data?.message || "Failed to delete asset";
       toast.error(message);
@@ -49,7 +60,7 @@ export function AssetDetailPage() {
     );
   }
 
-  if (error || !data) {
+  if (error || !asset) {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -59,8 +70,6 @@ export function AssetDetailPage() {
       </PageContainer>
     );
   }
-
-  const asset = data.data;
 
   const getStatusBadge = (status: string) => {
     const variants: Record<string, "default" | "secondary" | "destructive"> = {
@@ -78,7 +87,7 @@ export function AssetDetailPage() {
         description: `Asset Code: ${asset.code}`,
         actions: (
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: "/assets" })}>
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: `/${tenant}/assets` })}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -86,7 +95,7 @@ export function AssetDetailPage() {
               <QrCode className="w-4 h-4 mr-2" />
               QR Code
             </Button>
-            <Button variant="outline" size="sm" onClick={() => navigate({ to: `/assets/${id}/edit` })}>
+            <Button variant="outline" size="sm" onClick={() => navigate({ to: `/${tenant}/assets/${id}/edit` })}>
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>

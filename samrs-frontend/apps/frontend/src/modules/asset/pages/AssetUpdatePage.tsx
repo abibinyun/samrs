@@ -1,14 +1,23 @@
-import { useParams, useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import PageContainer from "@/components/commons/containers/PageContainer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useGetAssetByIdQuery } from "../actions/assetApiNew";
 import { AssetUpdateForm } from "../layouts/AssetUpdateForm";
 
+function parsePath() {
+  const parts = window.location.pathname.split("/").filter(Boolean);
+  const idx = parts.indexOf("assets");
+  return {
+    tenant: parts[0] || "",
+    id: idx >= 0 ? parts[idx + 1] : undefined,
+  };
+}
+
 export function AssetUpdatePage() {
-  const { id } = useParams({ strict: false });
   const navigate = useNavigate();
-  const { data, isLoading, error, refetch } = useGetAssetByIdQuery(id!);
+  const { tenant, id } = parsePath();
+  const { data: asset, isLoading, error, refetch } = useGetAssetByIdQuery(id!, { skip: !id });
 
   if (isLoading) {
     return (
@@ -20,7 +29,7 @@ export function AssetUpdatePage() {
     );
   }
 
-  if (error || !data) {
+  if (error || !asset) {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center h-64 gap-4">
@@ -35,12 +44,12 @@ export function AssetUpdatePage() {
     <PageContainer
       header={{
         title: "Edit Asset",
-        description: `Update asset: ${data.data.name}`,
+        description: `Update asset: ${asset.name}`,
       }}
     >
       <Card>
         <CardContent className="pt-6">
-          <AssetUpdateForm asset={data.data} onCancel={() => navigate({ to: `/assets/${id}` })} />
+          <AssetUpdateForm asset={asset} onCancel={() => navigate({ to: `/${tenant}/assets/${id}` })} />
         </CardContent>
       </Card>
     </PageContainer>

@@ -1,38 +1,45 @@
-// src/store/api/assetApi.ts
-import { createApi } from "@reduxjs/toolkit/query/react";
-import { runMutationWorker } from "../mock/mocks"; 
-// import type { AssetDevice } from "../types"; 
+import { api } from "@/store/api";
+import type { AssetMutation, MutationFormInput, MutationListResponse, MutationApiResponse } from "../types";
 
-export const mutationApi = createApi({
-  reducerPath: "mutationApi",
-  baseQuery: async () => ({ data: {} }), // dummy
-  tagTypes: ["Mutations"],
+export const mutationApi = api.injectEndpoints({
   endpoints: (builder) => ({
-    // getAssets: builder.query<AssetDevice[], void>({
-    getMutations: builder.query<any[], void>({
-      async queryFn() {
-        try {
-          // simulasi network
-          await new Promise(r => setTimeout(r, 1500));
+    getMutations: builder.query<MutationListResponse, {
+      page?: number;
+      limit?: number;
+      search?: string;
+      asset_id?: string;
+      date_from?: string;
+      date_to?: string;
+    }>({
+      query: (params) => ({
+        url: "/api/v1/asset-mutations",
+        params,
+      }),
+      providesTags: ["Assets"],
+      transformResponse: (response: MutationApiResponse<AssetMutation[]>) => ({
+        data: response.data,
+        total: (response as any).meta?.total || 0,
+      }),
+    }),
 
-          const data = await runMutationWorker();
+    getMutationById: builder.query<MutationApiResponse<AssetMutation>, number>({
+      query: (id) => `/api/v1/asset-mutations/${id}`,
+      providesTags: (_result, _error, id) => [{ type: "Assets", id: `mutation-${id}` }],
+    }),
 
-          return { data };
-        } catch (error) {
-          return {
-            error: {
-              status: "CUSTOM_ERROR",
-              error: String(error),
-            },
-          };
-        }
-      },
-      providesTags: ["Mutations"],
+    createMutation: builder.mutation<MutationApiResponse<{ mutation: AssetMutation }>, MutationFormInput>({
+      query: (body) => ({
+        url: "/api/v1/asset-mutations",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Assets"],
     }),
   }),
 });
 
 export const {
   useGetMutationsQuery,
-  usePrefetch,
+  useGetMutationByIdQuery,
+  useCreateMutationMutation,
 } = mutationApi;

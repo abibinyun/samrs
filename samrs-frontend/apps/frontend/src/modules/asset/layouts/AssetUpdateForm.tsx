@@ -5,7 +5,6 @@ import { useUpdateAssetMutation } from "../actions/assetApiNew";
 import type { Asset } from "../types";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { useNavigate } from "@tanstack/react-router";
 import AssetFormFields from "./AssetFormFields";
 
 type AssetUpdateFormProps = {
@@ -14,7 +13,6 @@ type AssetUpdateFormProps = {
 };
 
 export function AssetUpdateForm({ asset, onCancel }: AssetUpdateFormProps) {
-  const navigate = useNavigate();
   const [updateAsset, { isLoading }] = useUpdateAssetMutation();
   
   const form = useForm<AssetFormValues>({
@@ -31,7 +29,7 @@ export function AssetUpdateForm({ asset, onCancel }: AssetUpdateFormProps) {
       brand: asset.brand || "",
       model: asset.model || "",
       status: asset.status,
-      purchase_date: asset.purchase_date || new Date().toISOString().split("T")[0],
+      purchase_date: asset.purchase_date ? asset.purchase_date.split("T")[0] : new Date().toISOString().split("T")[0],
     },
   });
 
@@ -39,7 +37,7 @@ export function AssetUpdateForm({ asset, onCancel }: AssetUpdateFormProps) {
     try {
       await updateAsset({ id: asset.id, data }).unwrap();
       toast.success("Asset updated successfully");
-      navigate({ to: `/assets/${asset.id}` });
+      onCancel();
     } catch (error: any) {
       const message = error?.data?.message || "Failed to update asset";
       toast.error(message);

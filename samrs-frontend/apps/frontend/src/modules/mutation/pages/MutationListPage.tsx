@@ -1,167 +1,114 @@
 import { lazy, useMemo, useState } from "react";
-import { useNavigate, useRouterState } from "@tanstack/react-router";
-import { Plus, Download } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SCOPES } from "@/constants/permissions";
 import { usePermission } from "@/hooks/usePermission";
-import type { AssetQrPayload } from "@/modules/asset/components/AssetQrDialog"; 
-import { TableSkeleton } from "@/components/commons/data-table/TableSkeleton";
-import { useGetMutationsQuery } from "@/modules/mutation/actions/mutationApi";
+import { useGetMutationsQuery } from "../actions/mutationApi";
+import { createMutationColumns } from "../components/MutationColumns";
 import { useDebounce } from "@/hooks/useDebounce";
-import type { DateRange } from "react-day-picker";
-import { startOfDay } from "date-fns";
-import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { createTabKey } from "@/modules/dashboard/tabs/utils";
-import { patchAssetListUI } from "@/modules/asset/actions/assetListUiSlice"; 
 
-const AssetTable = lazy(() => import("../../asset/layouts/AssetTable"));
+const MutationTable = lazy(() => import("../components/MutationTable"));
 const PageContainer = lazy(() => import("@/components/commons/containers/PageContainer"));
-const AssetQrDialog = lazy(() => import("../../asset/components/AssetQrDialog"));
-
-function toISO(d?: Date) {
-  return d ? d.toISOString() : undefined;
-}
-function fromISO(s?: string) {
-  return s ? new Date(s) : undefined;
-}
 
 export default function MutationListPage() {
   const { hasPermission } = usePermission();
   const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-  const location = useRouterState({ select: (s) => s.location });
-
-  const { data: assets = [], isLoading, isFetching } = useGetMutationsQuery();
-  const [qr, setQr] = useState<AssetQrPayload | null>(null);
-
-  // ✅ ambil location untuk tabKey yang sama persis dengan KeepAliveOutlet
-  const tabKey = useMemo(
-    () => createTabKey(location.pathname, location.searchStr),
-    [location.pathname, location.searchStr]
-  );
-
-  const ui = useAppSelector((s) => s.assetListUi.byTabKey[tabKey]) ?? {
-    search: "",
-    category: "__all",
-    dateRange: undefined,
-  };
-
-  const search = ui.search;
-  const category = ui.category;
-
-  const dateRange: DateRange | undefined = useMemo(() => {
-    const from = fromISO(ui.dateRange?.from);
-    const to = fromISO(ui.dateRange?.to);
-    return from || to ? { from, to } : undefined;
-  }, [ui.dateRange?.from, ui.dateRange?.to]);
-
-  const setSearch = (v: string) =>
-    dispatch(patchAssetListUI({ tabKey, patch: { search: v } }));
-
-  const setCategory = (v: string) =>
-    dispatch(patchAssetListUI({ tabKey, patch: { category: v } }));
-
-  const setDateRange = (r?: DateRange) =>
-    dispatch(
-      patchAssetListUI({
-        tabKey,
-        patch: {
-          dateRange: r
-            ? { from: toISO(r.from), to: toISO(r.to) }
-            : undefined,
-        },
-      })
-    );
-  
-  const setColumnVisibility = (v: any) =>
-    dispatch(patchAssetListUI({ tabKey, patch: { columnVisibility: v } }));
-
-  const setColumnFilters = (v: any) =>
-    dispatch(patchAssetListUI({ tabKey, patch: { columnFilters: v } }));
-
-  const categories = ["ready", "maintenance", "broken"];
-
-  const normalizedAssets = useMemo(() => {
-    return assets.map((a) => ({
-      ...a,
-      _search: `${a.name} ${a.code}`.toLowerCase(),
-      _category: a.status.toString(),
-      _purchase_date: startOfDay(new Date(a.purchase_date)),
-    }));
-  }, [assets]);
-
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 400);
 
-  const filteredAssets = useMemo(() => {
-    const s = debouncedSearch.trim().toLowerCase();
+  const { data, isLoading, isFetching, error } = useGetMutationsQuery({
+    page,
+    limit: 20,
+    search: debouncedSearch || undefined,
+  });
 
-    return normalizedAssets.filter((a) => {
-      const matchSearch = !s || a._search.includes(s);
-      const matchCategory = category === "__all" || a._category === category;
+  const mutations = data?.data || [];
+  const total = data?.total || 0;
+  const totalPages = Math.ceil(total / 20);
 
-      const matchDate =
-        !dateRange?.from ||
-        !dateRange?.to ||
-        (a._purchase_date >= startOfDay(dateRange.from) &&
-          a._purchase_date <= startOfDay(dateRange.to));
-
-      return matchSearch && matchCategory && matchDate;
-    });
-  }, [normalizedAssets, debouncedSearch, category, dateRange]);
-
-  const handleAddAsset = () => {
-    navigate({ to: "create" });
-  };
+  const columns = useMemo(() => createMutationColumns(), []);
 
   return (
     <PageContainer
       header={{
-        title: "Mutation Aset",
-        description: `Total ${assets.length.toLocaleString(
-          "id-ID"
-        )} aset terdaftar di sistem.`,
+        title: "Mutasi & Timeline",
+        description: `Total ${total.toLocaleString("id-ID")} mutasi tercatat.`,
         actions: (
           <>
-            {hasPermission(SCOPES.REPORT.EXPORT) && (
-              <Button variant="outline" className="gap-2">
-                <Download className="w-4 h-4" /> Export
-              </Button>
-            )}
-            {hasPermission(SCOPES.ASSET.CREATE) && (
-              <Button className="gap-2" onClick={handleAddAsset}>
-                <Plus className="w-4 h-4" /> Tambah Aset
+            {hasPermission(SCOPES.ASSET_MUTATION.CREATE) && (
+              <Button className="gap-2" onClick={() => navigate({ to: "create" })}>
+                <Plus className="w-4 h-4" /> Tambah Mutasi
               </Button>
             )}
           </>
-        )
+        ),
       }}
     >
-      {(isLoading || isFetching) && <TableSkeleton rows={20} />}
-
-      {!isLoading && (
-        <AssetTable
-          data={filteredAssets}
-          isLoading={isLoading}
-          search={search}
-          onSearchChange={setSearch}
-          onOpenQr={setQr}
-          setCategory={setCategory}
-          category={category}
-          categories={categories}
-          dateRange={dateRange}
-          setDateRange={setDateRange}
-          columnVisibility={ui.columnVisibility}
-          onColumnVisibilityChange={setColumnVisibility}
-          columnFilters={ui.columnFilters}
-          onColumnFiltersChange={setColumnFilters}
+      <div className="mb-4">
+        <Input
+          placeholder="Cari alasan, kode aset..."
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
+          className="max-w-sm"
         />
+      </div>
+
+      {error && (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-destructive">Gagal memuat data mutasi</p>
+          <Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>
+        </div>
       )}
 
-      <AssetQrDialog
-        open={!!qr}
-        onOpenChange={(v) => !v && setQr(null)}
-        asset={qr}
-      />
+      {!error && (
+        <lazy
+          fallback={
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-12 bg-muted animate-pulse rounded" />
+              ))}
+            </div>
+          }
+        >
+          <MutationTable
+            data={mutations}
+            columns={columns}
+            isLoading={isLoading || isFetching}
+          />
+        </lazy>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-sm text-muted-foreground">
+            Halaman {page} dari {totalPages}
+          </p>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </PageContainer>
   );
 }

@@ -31,9 +31,10 @@ export const assetApiNew = api.injectEndpoints({
       }),
     }),
     
-    getAssetById: builder.query<ApiResponse<Asset>, string>({
+    getAssetById: builder.query<Asset, string>({
       query: (id) => `/api/v1/assets/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Assets", id }],
+      transformResponse: (response: ApiResponse<Asset>) => response.data,
     }),
     
     createAsset: builder.mutation<ApiResponse<Asset>, AssetFormInput>({

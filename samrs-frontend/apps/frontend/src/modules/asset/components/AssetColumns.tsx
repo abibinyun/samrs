@@ -10,7 +10,7 @@ import { MapPin, Tag, QrCode, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Asset, AssetWide, AssetDevice } from "../types";
 import { assetStatus } from "./AssetStatus";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 export function createAssetColumns(opts: {
   onOpenQr: (asset: Pick<Asset, "id" | "name">) => void;
@@ -74,6 +74,12 @@ export function createAssetColumns(opts: {
       cell: ({ row }) => {
         const a = row.original;
         const navigate = useNavigate();
+        const basePath = useRouterState({
+          select: (s) => {
+            const parts = s.location.pathname.split("/").filter(Boolean);
+            return `/${parts[0]}`;
+          },
+        });
         
         return (
           <div className="flex items-center justify-end gap-1">
@@ -93,10 +99,10 @@ export function createAssetColumns(opts: {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate({ to: `./$id`, params: { id: a.id } })}>
+                <DropdownMenuItem onClick={() => navigate({ to: `${basePath}/assets/${a.id}` })}>
                   Lihat Detail
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate({ to: `./$id/edit`, params: { id: a.id } })}>
+                <DropdownMenuItem onClick={() => navigate({ to: `${basePath}/assets/${a.id}/edit` })}>
                   Edit
                 </DropdownMenuItem>
               </DropdownMenuContent>

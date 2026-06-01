@@ -1,50 +1,63 @@
-export type MutationStatus = "ready" | "maintenance" | "broken" | (string & {});
+export type AssetMutation = {
+  id: number;
+  tenant_id: string;
+  asset_id: string;
+  from_room_id: string | null;
+  from_bed_id: number | null;
+  to_room_id: string | null;
+  to_bed_id: number | null;
+  reason: string;
+  moved_by: string;
+  created_at: string;
 
-export type Mutation = {
-  id: string;
-  code: string;
-  name: string;
-  category: string;
-  room: string;
-  status: MutationStatus;
-  purchase_date: string;
+  // Preloaded relations
+  asset?: {
+    id: string;
+    code: string;
+    name: string;
+    status: string;
+    category?: { id: number; name: string };
+  };
+  mover?: {
+    id: string;
+    username: string;
+  };
+  from_room?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  to_room?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  from_bed?: {
+    id: number;
+    code: string;
+    name: string;
+  };
+  to_bed?: {
+    id: number;
+    code: string;
+    name: string;
+  };
 };
 
-export type MutationWide = Mutation & {
-  serial_number: string;
-  manufacturer: string;
-  model: string;
-  warranty_until: string;
-  condition_score: number;
-  last_service_date: string;
-  vendor: string;
-  price: number;
-  depreciation_rate: number;
-  ownership: string;
-  risk_level: string;
-  maintenance_cycle: string;
-  calibration_required: boolean;
-  power_rating: string;
-  weight_kg: number;
-  notes: string;
+export type MutationFormInput = {
+  asset_id: string;
+  to_room_id?: string;
+  to_bed_id?: number;
+  reason?: string;
 };
 
-export type MutationDevice = {
-  id: string;
-  // relations (ids)
-  category_id: number;
-  room_id: string;
-  bed_id: number | null;
-  vendor_id: number;
-  brand_id: number;
-  model_id: number;
+export type MutationListResponse = {
+  data: AssetMutation[];
+  total: number;
+};
 
-  // display fields
-  code: string;
-  name: string;
-  brand: string;
-  model: string;
-
-  status: MutationStatus;
-  purchase_date: string; // ISO date string
+export type MutationApiResponse<T = unknown> = {
+  success: boolean;
+  message: string;
+  data: T;
 };
