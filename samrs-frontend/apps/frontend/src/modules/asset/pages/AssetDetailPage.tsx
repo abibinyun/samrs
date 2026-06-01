@@ -18,13 +18,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import AssetQrDialog from "../components/AssetQrDialog";
 
 export function AssetDetailPage() {
   const { id } = useParams({ strict: false });
   const navigate = useNavigate();
-  const { data, isLoading, error } = useGetAssetByIdQuery(id!);
+  const { data, isLoading, error, refetch } = useGetAssetByIdQuery(id!);
   const [deleteAsset, { isLoading: isDeleting }] = useDeleteAssetMutation();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showQrDialog, setShowQrDialog] = useState(false);
 
   const handleDelete = async () => {
     try {
@@ -50,8 +52,9 @@ export function AssetDetailPage() {
   if (error || !data) {
     return (
       <PageContainer>
-        <div className="flex items-center justify-center h-64">
-          <p className="text-red-600">Failed to load asset</p>
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-destructive">Failed to load asset</p>
+          <Button variant="outline" onClick={() => refetch()}>Retry</Button>
         </div>
       </PageContainer>
     );
@@ -79,7 +82,7 @@ export function AssetDetailPage() {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
-            <Button variant="outline" size="sm" onClick={() => toast.info("QR Code feature coming soon")}>
+            <Button variant="outline" size="sm" onClick={() => setShowQrDialog(true)}>
               <QrCode className="w-4 h-4 mr-2" />
               QR Code
             </Button>
@@ -195,6 +198,12 @@ export function AssetDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AssetQrDialog 
+        open={showQrDialog} 
+        onOpenChange={setShowQrDialog} 
+        asset={{ id: asset.id, name: asset.name }} 
+      />
     </PageContainer>
   );
 }

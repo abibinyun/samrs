@@ -10,15 +10,19 @@ import {
 } from "@/components/ui/select";
 import { type AssetFormValues } from "../schemas";
 import { useGetRoomsQuery } from "@/modules/room/actions/roomApi";
+import { useGetCategoriesQuery } from "@/modules/category/actions/categoryApi";
 
 type Props = {
   form: UseFormReturn<AssetFormValues>;
-  errors: any;
+  errors: Record<string, { message?: string }>;
 };
 
 export default function AssetFormFields({ form, errors }: Props) {
-  const { data: roomsData, isLoading, isError } = useGetRoomsQuery({ limit: 100 });
+  const { data: roomsData, isLoading: isLoadingRooms, isError: isErrorRooms } = useGetRoomsQuery({ limit: 100 });
+  const { data: categoriesData, isLoading: isLoadingCategories, isError: isErrorCategories } = useGetCategoriesQuery({ limit: 100 });
+  
   const rooms = roomsData?.data || [];
+  const categories = categoriesData?.data || [];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-card p-6 border rounded-xl shadow-sm">
@@ -58,9 +62,9 @@ export default function AssetFormFields({ form, errors }: Props) {
 
       <div className="space-y-2">
         <Label>Room</Label>
-        <Select onValueChange={(v) => form.setValue("room_id", v, { shouldValidate: true })} disabled={isLoading || isError}>
+        <Select onValueChange={(v) => form.setValue("room_id", v, { shouldValidate: true })} disabled={isLoadingRooms || isErrorRooms}>
           <SelectTrigger>
-            <SelectValue placeholder={isLoading ? "Loading..." : isError ? "Failed to load rooms" : "Select Room"} />
+            <SelectValue placeholder={isLoadingRooms ? "Loading..." : isErrorRooms ? "Failed to load rooms" : "Select Room"} />
           </SelectTrigger>
           <SelectContent>
             {rooms.map((room) => (
@@ -75,13 +79,19 @@ export default function AssetFormFields({ form, errors }: Props) {
 
       <div className="space-y-2">
         <Label>Category</Label>
-        <Select onValueChange={(v) => form.setValue("category_id", Number(v), { shouldValidate: true })}>
+        <Select 
+          onValueChange={(v) => form.setValue("category_id", Number(v), { shouldValidate: true })}
+          disabled={isLoadingCategories || isErrorCategories}
+        >
           <SelectTrigger>
-            <SelectValue placeholder="Select Category" />
+            <SelectValue placeholder={isLoadingCategories ? "Loading..." : isErrorCategories ? "Failed to load categories" : "Select Category"} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="1">Ventilator</SelectItem>
-            <SelectItem value="2">Infusion Pump</SelectItem>
+            {categories.map((cat) => (
+              <SelectItem key={cat.id} value={String(cat.id)}>
+                {cat.name}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
         {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
@@ -89,13 +99,12 @@ export default function AssetFormFields({ form, errors }: Props) {
 
       <div className="space-y-2">
         <Label>Status</Label>
-        <Select defaultValue="ready" onValueChange={(v: any) => form.setValue("status", v)}>
+        <Select defaultValue="ready" onValueChange={(v: "ready" | "maintenance" | "broken") => form.setValue("status", v)}>
           <SelectTrigger>
             <SelectValue placeholder="Select Status" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="ready">Ready</SelectItem>
-            <SelectItem value="in_use">In Use</SelectItem>
             <SelectItem value="maintenance">Maintenance</SelectItem>
             <SelectItem value="broken">Broken</SelectItem>
           </SelectContent>

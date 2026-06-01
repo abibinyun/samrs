@@ -40,7 +40,6 @@ export function useAssetCreate() {
   };
 
   const onErrors = (err: any) => {
-    console.log("Form Errors:", err);
     toast.error("Please check the form for errors");
   };
 

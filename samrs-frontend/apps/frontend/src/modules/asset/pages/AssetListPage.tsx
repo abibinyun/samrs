@@ -49,7 +49,7 @@ export default function AssetListPage() {
   const debouncedSearch = useDebounce(search, 500);
 
   // Call backend API with search and filters
-  const { data, isLoading, isFetching } = useGetAssetsQuery({
+  const { data, isLoading, isFetching, error, refetch } = useGetAssetsQuery({
     search: debouncedSearch || undefined,
     status: category !== "__all" ? category : undefined,
   });
@@ -116,7 +116,14 @@ export default function AssetListPage() {
     >
       {(isLoading || isFetching) && <TableSkeleton rows={20} />}
 
-      {!isLoading && (
+      {error && !isLoading && (
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-destructive">Failed to load assets</p>
+          <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+        </div>
+      )}
+
+      {!isLoading && !error && (
         <AssetTable
           data={assets}
           isLoading={isLoading}
