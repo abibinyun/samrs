@@ -2,9 +2,8 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 
 const app = new Hono()
-const GO_SERVICE_URL = process.env.GO_SERVICE_URL || 'http://localhost:8080/api'
+const GO_SERVICE_URL = process.env.GO_SERVICE_URL || 'http://localhost:8080'
 
-// Aktifkan CORS agar Vite bisa akses
 app.use('*', cors({
   origin: ['http://localhost:5173', 'http://localhost:4173'],
   credentials: true,
@@ -12,13 +11,13 @@ app.use('*', cors({
 
 app.all('*', async (c) => {
   const url = new URL(c.req.url)
-  
-  // Gunakan template string sederhana untuk penggabungan yang lebih intuitif
-  // url.pathname dari Vite adalah "/v1/auth/login"
-  // GO_SERVICE_URL adalah "http://localhost:8080/api"
-  const targetUrl = `${GO_SERVICE_URL}${url.pathname}${url.search}`
+  const pathname = url.pathname
 
-  console.log(`🚀 Bridge: ${c.req.method} ${url.pathname} -> ${targetUrl}`)
+  // Forward path as-is to backend
+  // Dev (Vite proxy strips /api): receives /v1/auth/login → backend expects /api/v1/auth/login
+  // Prod (nginx preserves /api): receives /api/v1/auth/login → backend expects /api/v1/auth/login
+  const apiPath = pathname.startsWith('/api') ? pathname : `/api${pathname}`
+  const targetUrl = `${GO_SERVICE_URL}${apiPath}${url.search}`
 
   const response = await fetch(targetUrl, {
     method: c.req.method,
@@ -26,7 +25,6 @@ app.all('*', async (c) => {
     body: ['GET', 'HEAD'].includes(c.req.method) ? undefined : await c.req.arrayBuffer(),
   })
 
-  // Salin response body dan headers secara manual untuk menghindari masalah immutability
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,

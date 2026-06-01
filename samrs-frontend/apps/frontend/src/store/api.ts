@@ -32,44 +32,10 @@ const rawBaseQuery = fetchBaseQuery({
 
     return headers;
   },
-
-  // prepareHeaders: (headers, { getState, endpoint }) => {
-  //   const state = getState() as RootState;
-
-  //   // 1. Ambil token dari Redux
-  //   const token = state.auth.token;
-
-  //   // 2. Jangan pasang Authorization header untuk endpoint login / refresh
-  //   if (token && endpoint !== "login" && endpoint !== "refresh") {
-  //     headers.set("Authorization", `Bearer ${token}`);
-  //   }
-
-  //   // tenant header optional
-  //   if (state.auth.user?.tenant_slug) {
-  //     headers.set("X-Tenant-ID", state.auth.user.tenant_slug);
-  //   }
-
-  //   return headers;
-  // },
-
 });
 
 /**
- * Refresh mutex
- */
-let isRefreshing = false;
-let refreshPromise:
-  | Promise<
-      QueryReturnValue<
-        unknown,
-        FetchBaseQueryError,
-        FetchBaseQueryMeta
-      >
-    >
-  | null = null;
-
-/**
- * Base query with auto refresh
+ * Base query with auto logout on 401
  */
 const baseQueryWithReauth: BaseQueryFn<
   string | FetchArgs,
@@ -78,44 +44,12 @@ const baseQueryWithReauth: BaseQueryFn<
   {},
   FetchBaseQueryMeta
 > = async (args, api, extraOptions) => {
-  let result = await rawBaseQuery(args, api, extraOptions);
+  const result = await rawBaseQuery(args, api, extraOptions);
 
-  if (result.error?.status !== 401) {
-    return result;
+  if (result.error?.status === 401) {
+    api.dispatch(clearCredentials());
   }
 
-  // 🔒 single refresh request
-  if (!isRefreshing) {
-    isRefreshing = true;
-
-    refreshPromise = (async () => {
-      try {
-        return await rawBaseQuery(
-          { url: "/auth/refresh", method: "POST" },
-          api,
-          extraOptions
-        );
-      } finally {
-        isRefreshing = false;
-      }
-    })();
-  }
-
-  const refreshResult = await refreshPromise;
-
-  if (refreshResult?.data && typeof refreshResult.data === "object") {
-    const token = (refreshResult.data as { token?: string }).token;
-
-    if (token) {
-      api.dispatch(setCredentials({ token }));
-
-      // 🔁 retry original request
-      result = await rawBaseQuery(args, api, extraOptions);
-      return result;
-    }
-  }
-
-  api.dispatch(clearCredentials());
   return result;
 };
 

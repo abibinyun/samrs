@@ -41,13 +41,6 @@ export const useLogin = () => {
       // 4️⃣ Toast & redirect
       toast.success(`Selamat datang, ${userData.username}`);
       
-      // Debug log
-      console.log('🔐 Login Success:', {
-        tenant_slug: userData.tenant.slug,
-        is_system: userData.role.is_system,
-        permissions: permissions.length
-      });
-      
       // Navigate to tenant dashboard
       const tenantSlug = userData.tenant?.slug;
       if (!tenantSlug) {

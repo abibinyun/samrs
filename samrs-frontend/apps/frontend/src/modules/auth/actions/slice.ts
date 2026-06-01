@@ -5,7 +5,7 @@ interface User {
   tenant_slug: string;
   role: string;
   name?: string;
-  is_system?: boolean; // Deprecated: use role.is_system instead
+  is_system?: boolean;
 }
 
 interface AuthState {
