@@ -6,7 +6,6 @@ import { mutationApi } from "@/modules/mutation/actions/mutationApi";
 
 import authReducer from "@/modules/auth/actions/slice";
 import assetReducer from "@/modules/asset/actions/assetSlice";
-import tabsReducer from "@/modules/dashboard/tabs/actions/tabSlice";
 import tableStateReducer from "@/modules/dashboard/tabs/actions/tableStateSlice";
 import assetListUiReducer from "@/modules/asset/actions/assetListUiSlice";
 import mutationReducer from "@/modules/mutation/actions/mutationSlice";
@@ -24,7 +23,6 @@ export const store = configureStore({
 
     // UI slice
     assets: assetReducer,
-    tabs: tabsReducer,
     tableState: tableStateReducer,
     assetListUi: assetListUiReducer,
     mutations: mutationReducer,
