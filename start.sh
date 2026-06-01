@@ -13,7 +13,7 @@ fi
 
 # Start services
 echo "🐳 Starting Docker services..."
-docker-compose up -d
+docker compose up -d
 
 echo ""
 echo "⏳ Waiting for services to be ready..."
@@ -22,13 +22,13 @@ sleep 10
 # Check services
 echo ""
 echo "🔍 Checking services status..."
-docker-compose ps
+docker compose ps
 
 echo ""
 echo "✅ SAMRS Project is running!"
 echo ""
 echo "📍 Access URLs:"
-echo "   Frontend:  http://localhost:5173"
+echo "   Frontend:  http://localhost:8000"
 echo "   Backend:   http://localhost:8090"
 echo "   BFF:       http://localhost:3000"
 echo ""

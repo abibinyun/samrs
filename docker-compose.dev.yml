@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Override frontend untuk development dengan hot reload
   frontend:
@@ -9,8 +7,9 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./samrs-frontend:/app
+      - ./samrs-frontend/apps/frontend:/app/apps/frontend
       - /app/node_modules
+      - /app/apps/frontend/node_modules
     environment:
       VITE_API_URL: http://localhost:3000
 
