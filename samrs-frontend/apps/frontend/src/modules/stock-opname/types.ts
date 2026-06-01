@@ -1,8 +1,9 @@
-export type StockOpnameStatus = "open" | "closed" | (string & {});
-export type StockOpnameCondition = "match" | "missing" | "excess" | "damaged" | (string & {});
+export type StockOpnameStatus = "draft" | "closed";
+export type StockOpnameCondition = "match" | "missing" | "damaged";
 
 export type StockOpnameSession = {
   id: number;
+  tenant_id: string;
   title: string;
   opname_at: string;
   status: StockOpnameStatus;
@@ -13,13 +14,23 @@ export type StockOpnameSession = {
 
 export type StockOpnameItem = {
   id: number;
+  tenant_id: string;
   session_id: number;
   asset_id: string;
-  asset_code: string;
-  asset_name: string;
   condition: StockOpnameCondition;
   note?: string;
+  checked_by: string;
   created_at: string;
+  asset?: {
+    id: string;
+    code: string;
+    name: string;
+    status: string;
+  };
+  checker?: {
+    id: string;
+    username: string;
+  };
 };
 
 export type StockOpnameFormData = {

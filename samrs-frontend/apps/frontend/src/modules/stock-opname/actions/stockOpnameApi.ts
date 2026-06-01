@@ -31,6 +31,14 @@ export const stockOpnameApi = api.injectEndpoints({
       query: ({ sessionId, data }) => ({ url: `/api/v1/stock-opnames/${sessionId}/items`, method: "POST", body: data }),
       invalidatesTags: (_r, _e, { sessionId }) => [{ type: "StockOpname", id: `items-${sessionId}` }],
     }),
+    updateStockOpnameSession: builder.mutation<SessionResponse, { id: number; data: Partial<StockOpnameFormData> }>({
+      query: ({ id, data }) => ({ url: `/api/v1/stock-opnames/${id}`, method: "PATCH", body: data }),
+      invalidatesTags: (_r, _e, { id }) => ["StockOpname", { type: "StockOpname", id }],
+    }),
+    deleteStockOpnameItem: builder.mutation<{ success: boolean }, { sessionId: number; itemId: number }>({
+      query: ({ sessionId, itemId }) => ({ url: `/api/v1/stock-opnames/${sessionId}/items/${itemId}`, method: "DELETE" }),
+      invalidatesTags: (_r, _e, { sessionId }) => [{ type: "StockOpname", id: `items-${sessionId}` }],
+    }),
   }),
 });
 
@@ -38,7 +46,9 @@ export const {
   useGetStockOpnameSessionsQuery,
   useGetStockOpnameSessionQuery,
   useCreateStockOpnameSessionMutation,
+  useUpdateStockOpnameSessionMutation,
   useCloseStockOpnameSessionMutation,
   useGetStockOpnameItemsQuery,
   useAddStockOpnameItemMutation,
+  useDeleteStockOpnameItemMutation,
 } = stockOpnameApi;

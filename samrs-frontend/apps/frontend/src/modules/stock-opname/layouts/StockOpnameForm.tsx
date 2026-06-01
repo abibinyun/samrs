@@ -1,30 +1,25 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { stockOpnameSchema, type StockOpnameFormValues } from "../schemas";
-import { useCreateStockOpnameSessionMutation } from "../actions/stockOpnameApi";
+import type { StockOpnameFormData } from "../types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 
-export function StockOpnameForm() {
+type Props = {
+  onSubmit: (data: StockOpnameFormData) => Promise<void>;
+  isLoading?: boolean;
+  defaultValues?: StockOpnameFormData;
+};
+
+export function StockOpnameForm({ onSubmit, isLoading, defaultValues }: Props) {
   const navigate = useNavigate();
-  const [createSession, { isLoading }] = useCreateStockOpnameSessionMutation();
   const { register, handleSubmit, formState: { errors } } = useForm<StockOpnameFormValues>({
     resolver: zodResolver(stockOpnameSchema),
+    defaultValues,
   });
-
-  const onSubmit = async (data: StockOpnameFormValues) => {
-    try {
-      await createSession(data).unwrap();
-      toast.success("Sesi stock opname berhasil dibuat");
-      navigate({ to: "/assets/stock-opname" });
-    } catch (error) {
-      toast.error("Gagal membuat sesi");
-    }
-  };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -44,7 +39,7 @@ export function StockOpnameForm() {
       </div>
       <div className="flex gap-2">
         <Button type="submit" disabled={isLoading}>{isLoading ? "Menyimpan..." : "Simpan"}</Button>
-        <Button type="button" variant="outline" onClick={() => navigate({ to: "/assets/stock-opname" })}>Batal</Button>
+        <Button type="button" variant="outline" onClick={() => navigate({ to: "/stock-opname" })}>Batal</Button>
       </div>
     </form>
   );

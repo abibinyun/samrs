@@ -45,7 +45,7 @@ export function createStockOpnameColumns(opts: {
             <Button variant="ghost" size="icon" onClick={() => opts.onView(s)} title="Lihat Items">
               <Eye className="w-4 h-4" />
             </Button>
-            {s.status === "open" && (
+            {s.status === "draft" && (
               <Button variant="ghost" size="icon" onClick={() => opts.onClose(s.id)} title="Tutup Sesi">
                 <Lock className="w-4 h-4" />
               </Button>

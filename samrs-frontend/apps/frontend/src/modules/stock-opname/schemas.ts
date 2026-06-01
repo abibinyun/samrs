@@ -8,7 +8,7 @@ export const stockOpnameSchema = z.object({
 
 export const stockOpnameItemSchema = z.object({
   asset_id: z.string().min(1, "Asset is required"),
-  condition: z.enum(["match", "missing", "excess", "damaged"]),
+  condition: z.enum(["match", "missing", "damaged"]),
   note: z.string().optional(),
 });
 

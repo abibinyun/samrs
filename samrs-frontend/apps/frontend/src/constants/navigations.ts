@@ -62,7 +62,7 @@ export const MENU_ITEMS: MenuSection[] = [
       { 
         label: "Stock Opname", 
         icon: FileCheck, 
-        to: "/assets/stock-opname", 
+        to: "/stock-opname", 
         permission: SCOPES.STOCK_OPNAME.READ 
       },
     ],
