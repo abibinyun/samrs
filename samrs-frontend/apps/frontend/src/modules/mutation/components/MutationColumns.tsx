@@ -1,9 +1,15 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 import type { AssetMutation } from "../types";
 
-export function createMutationColumns(): ColumnDef<AssetMutation>[] {
+type MutationColumnsOpts = {
+  onViewDetail: (id: number) => void;
+};
+
+export function createMutationColumns({ onViewDetail }: MutationColumnsOpts): ColumnDef<AssetMutation>[] {
   return [
     {
       accessorKey: "asset.code",
@@ -56,6 +62,23 @@ export function createMutationColumns(): ColumnDef<AssetMutation>[] {
         <span className="text-sm text-muted-foreground">
           {format(new Date(row.original.created_at), "dd MMM yyyy HH:mm")}
         </span>
+      ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-right">Aksi</div>,
+      enableSorting: false,
+      cell: ({ row }) => (
+        <div className="flex items-center justify-end">
+          <Button
+            variant="ghost"
+            size="icon"
+            title="Lihat Detail"
+            onClick={() => onViewDetail(row.original.id)}
+          >
+            <Eye className="w-4 h-4" />
+          </Button>
+        </div>
       ),
     },
   ];

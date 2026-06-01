@@ -1,5 +1,5 @@
-import { lazy, useMemo, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { Suspense, lazy, useMemo, useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,13 +8,19 @@ import { usePermission } from "@/hooks/usePermission";
 import { useGetMutationsQuery } from "../actions/mutationApi";
 import { createMutationColumns } from "../components/MutationColumns";
 import { useDebounce } from "@/hooks/useDebounce";
-
-const MutationTable = lazy(() => import("../components/MutationTable"));
-const PageContainer = lazy(() => import("@/components/commons/containers/PageContainer"));
+import PageContainer from "@/components/commons/containers/PageContainer";
+import MutationTable from "../components/MutationTable";
 
 export default function MutationListPage() {
   const { hasPermission } = usePermission();
   const navigate = useNavigate();
+  const basePath = useRouterState({
+    select: (s) => {
+      const parts = s.location.pathname.split("/").filter(Boolean);
+      return `/${parts[0]}`;
+    },
+  });
+
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const debouncedSearch = useDebounce(search, 400);
@@ -29,7 +35,13 @@ export default function MutationListPage() {
   const total = data?.total || 0;
   const totalPages = Math.ceil(total / 20);
 
-  const columns = useMemo(() => createMutationColumns(), []);
+  const columns = useMemo(
+    () =>
+      createMutationColumns({
+        onViewDetail: (id) => navigate({ to: `${basePath}/assets/mutation/${id}` }),
+      }),
+    [navigate, basePath],
+  );
 
   return (
     <PageContainer
@@ -39,7 +51,7 @@ export default function MutationListPage() {
         actions: (
           <>
             {hasPermission(SCOPES.ASSET_MUTATION.CREATE) && (
-              <Button className="gap-2" onClick={() => navigate({ to: "create" })}>
+              <Button className="gap-2" onClick={() => navigate({ to: `${basePath}/assets/mutation/create` })}>
                 <Plus className="w-4 h-4" /> Tambah Mutasi
               </Button>
             )}
@@ -67,7 +79,7 @@ export default function MutationListPage() {
       )}
 
       {!error && (
-        <lazy
+        <Suspense
           fallback={
             <div className="space-y-2">
               {Array.from({ length: 5 }).map((_, i) => (
@@ -81,7 +93,7 @@ export default function MutationListPage() {
             columns={columns}
             isLoading={isLoading || isFetching}
           />
-        </lazy>
+        </Suspense>
       )}
 
       {totalPages > 1 && (

@@ -1,5 +1,21 @@
 import { api } from "@/store/api";
-import type { AssetMutation, MutationFormInput, MutationListResponse, MutationApiResponse } from "../types";
+import type { AssetMutation, MutationFormInput } from "../types";
+
+type ApiResponse<T> = {
+  success: boolean;
+  message: string;
+  data: T;
+  meta?: {
+    total: number;
+    page: number;
+    per_page: number;
+  };
+};
+
+type MutationListResponse = {
+  data: AssetMutation[];
+  total: number;
+};
 
 export const mutationApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -16,18 +32,18 @@ export const mutationApi = api.injectEndpoints({
         params,
       }),
       providesTags: ["Assets"],
-      transformResponse: (response: MutationApiResponse<AssetMutation[]>) => ({
+      transformResponse: (response: ApiResponse<AssetMutation[]>) => ({
         data: response.data,
-        total: (response as any).meta?.total || 0,
+        total: response.meta?.total || 0,
       }),
     }),
 
-    getMutationById: builder.query<MutationApiResponse<AssetMutation>, number>({
+    getMutationById: builder.query<ApiResponse<AssetMutation>, number>({
       query: (id) => `/api/v1/asset-mutations/${id}`,
       providesTags: (_result, _error, id) => [{ type: "Assets", id: `mutation-${id}` }],
     }),
 
-    createMutation: builder.mutation<MutationApiResponse<{ mutation: AssetMutation }>, MutationFormInput>({
+    createMutation: builder.mutation<ApiResponse<{ mutation: AssetMutation }>, MutationFormInput>({
       query: (body) => ({
         url: "/api/v1/asset-mutations",
         method: "POST",

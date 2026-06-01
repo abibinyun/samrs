@@ -46,8 +46,8 @@ export type AssetMutation = {
 
 export type MutationFormInput = {
   asset_id: string;
-  to_room_id?: string;
-  to_bed_id?: number;
+  room_id?: string;
+  bed_id?: number;
   reason?: string;
 };
 

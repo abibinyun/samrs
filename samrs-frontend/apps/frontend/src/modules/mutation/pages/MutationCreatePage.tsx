@@ -1,5 +1,5 @@
-import { lazy, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useState } from "react";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,12 +19,17 @@ import { useGetAssetsQuery } from "@/modules/asset/actions/assetApiNew";
 import { useGetRoomsQuery } from "@/modules/room/actions/roomApi";
 import { SCOPES } from "@/constants/permissions";
 import { usePermission } from "@/hooks/usePermission";
-
-const PageContainer = lazy(() => import("@/components/commons/containers/PageContainer"));
+import PageContainer from "@/components/commons/containers/PageContainer";
 
 export default function MutationCreatePage() {
   const navigate = useNavigate();
   const { hasPermission } = usePermission();
+  const basePath = useRouterState({
+    select: (s) => {
+      const parts = s.location.pathname.split("/").filter(Boolean);
+      return `/${parts[0]}`;
+    },
+  });
   const [createMutation, { isLoading }] = useCreateMutationMutation();
 
   const { data: assetsData, isLoading: isLoadingAssets } = useGetAssetsQuery({ limit: 100 });
@@ -32,8 +37,8 @@ export default function MutationCreatePage() {
 
   const [form, setForm] = useState({
     asset_id: "",
-    to_room_id: "",
-    to_bed_id: "",
+    room_id: "",
+    bed_id: "",
     reason: "",
   });
 
@@ -45,7 +50,7 @@ export default function MutationCreatePage() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!form.asset_id) newErrors.asset_id = "Asset harus dipilih";
-    if (!form.to_room_id) newErrors.to_room_id = "Ruangan tujuan harus dipilih";
+    if (!form.room_id) newErrors.room_id = "Ruangan tujuan harus dipilih";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -57,13 +62,13 @@ export default function MutationCreatePage() {
     try {
       await createMutation({
         asset_id: form.asset_id,
-        to_room_id: form.to_room_id || undefined,
-        to_bed_id: form.to_bed_id ? Number(form.to_bed_id) : undefined,
+        room_id: form.room_id || undefined,
+        bed_id: form.bed_id ? Number(form.bed_id) : undefined,
         reason: form.reason || undefined,
       }).unwrap();
 
       toast.success("Mutasi aset berhasil");
-      navigate({ to: "/assets/mutation" });
+      navigate({ to: `${basePath}/assets/mutation` });
     } catch (error: any) {
       const message = error?.data?.message || "Gagal melakukan mutasi";
       toast.error(message);
@@ -90,7 +95,7 @@ export default function MutationCreatePage() {
             variant="ghost"
             size="sm"
             className="pl-0 text-muted-foreground"
-            onClick={() => navigate({ to: "/assets/mutation" })}
+            onClick={() => navigate({ to: `${basePath}/assets/mutation` })}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Kembali
@@ -98,7 +103,7 @@ export default function MutationCreatePage() {
         ),
         actions: (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate({ to: "/assets/mutation" })}>
+            <Button variant="outline" onClick={() => navigate({ to: `${basePath}/assets/mutation` })}>
               Batal
             </Button>
             <Button form="mutation-form" type="submit" disabled={isLoading}>
@@ -136,10 +141,10 @@ export default function MutationCreatePage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="to_room_id">Ruangan Tujuan *</Label>
+              <Label htmlFor="room_id">Ruangan Tujuan *</Label>
               <Select
-                value={form.to_room_id}
-                onValueChange={(v) => setForm({ ...form, to_room_id: v })}
+                value={form.room_id}
+                onValueChange={(v) => setForm({ ...form, room_id: v })}
                 disabled={isLoadingRooms}
               >
                 <SelectTrigger>
@@ -153,16 +158,16 @@ export default function MutationCreatePage() {
                   ))}
                 </SelectContent>
               </Select>
-              {errors.to_room_id && <p className="text-xs text-destructive">{errors.to_room_id}</p>}
+              {errors.room_id && <p className="text-xs text-destructive">{errors.room_id}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="to_bed_id">Tempat Tidur (Opsional)</Label>
+              <Label htmlFor="bed_id">Tempat Tidur (Opsional)</Label>
               <Input
-                id="to_bed_id"
+                id="bed_id"
                 type="number"
-                value={form.to_bed_id}
-                onChange={(e) => setForm({ ...form, to_bed_id: e.target.value })}
+                value={form.bed_id}
+                onChange={(e) => setForm({ ...form, bed_id: e.target.value })}
                 placeholder="Nomor tempat tidur"
               />
             </div>
