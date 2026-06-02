@@ -12,4 +12,5 @@ func registerStockOpnameRoutes(v1 *gin.RouterGroup, handlers Handlers, deps Rout
 	v1.PATCH("/stock-opnames/:id/close", requirePerm(deps, "stock_opname:close"), handlers.StockOpname.CloseSession)
 	v1.POST("/stock-opnames/:id/items", requirePerm(deps, "stock_opname:update"), handlers.StockOpname.AddItem)
 	v1.GET("/stock-opnames/:id/items", requirePerm(deps, "stock_opname:read"), handlers.StockOpname.ListItems)
+	v1.DELETE("/stock-opnames/:id/items/:itemId", requirePerm(deps, "stock_opname:update"), handlers.StockOpname.DeleteItem)
 }

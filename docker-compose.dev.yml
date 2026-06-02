@@ -1,4 +1,30 @@
 services:
+  # Override backend untuk development dengan hot reload (air)
+  backend:
+    build:
+      context: ./samrs-backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./samrs-backend:/app
+      - /app/tmp
+    environment:
+      APP_PORT: 8080
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: samrs_user
+      DB_PASSWORD: samrs_password
+      DB_NAME: samrs_db
+      DB_SSLMODE: disable
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+
+  # Override bff untuk development dengan hot reload (bun --hot)
+  bff:
+    build:
+      context: ./samrs-frontend/apps/bff
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./samrs-frontend/apps/bff/src:/app/src
+
   # Override frontend untuk development dengan hot reload
   frontend:
     build:
@@ -13,4 +39,3 @@ services:
     environment:
       VITE_API_URL: http://localhost:3000
       VITE_PROXY_TARGET: http://bff:3000
-

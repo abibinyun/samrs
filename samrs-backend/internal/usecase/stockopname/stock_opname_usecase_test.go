@@ -315,6 +315,19 @@ func TestStockOpnameUsecase_AddItem(t *testing.T) {
 			wantErr: "session tidak ditemukan atau akses ditolak",
 		},
 		{
+			name: "session closed",
+			input: StockOpnameItemInput{
+				TenantID:  tenantID,
+				SessionID: sessionID,
+				AssetID:   assetID,
+				CheckedBy: checkedBy,
+			},
+			setup: func(repo *mocks.MockStockOpnameRepository, itemRepo *mocks.MockStockOpnameItemRepository, assetRepo *mocks.MockAssetRepository) {
+				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID, Status: domain.StockOpnameStatusClosed}, nil)
+			},
+			wantErr: "tidak dapat menambah item pada sesi yang sudah ditutup",
+		},
+		{
 			name: "asset not found",
 			input: StockOpnameItemInput{
 				TenantID:  tenantID,
@@ -323,7 +336,7 @@ func TestStockOpnameUsecase_AddItem(t *testing.T) {
 				CheckedBy: checkedBy,
 			},
 			setup: func(repo *mocks.MockStockOpnameRepository, itemRepo *mocks.MockStockOpnameItemRepository, assetRepo *mocks.MockAssetRepository) {
-				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID}, nil)
+				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID, Status: domain.StockOpnameStatusDraft}, nil)
 				assetRepo.EXPECT().FindByIDAndTenant(assetID, tenantID).Return(nil, errors.New("not found"))
 			},
 			wantErr: "asset tidak ditemukan atau akses ditolak",
@@ -338,7 +351,7 @@ func TestStockOpnameUsecase_AddItem(t *testing.T) {
 				Condition: "invalid",
 			},
 			setup: func(repo *mocks.MockStockOpnameRepository, itemRepo *mocks.MockStockOpnameItemRepository, assetRepo *mocks.MockAssetRepository) {
-				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID}, nil)
+				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID, Status: domain.StockOpnameStatusDraft}, nil)
 				assetRepo.EXPECT().FindByIDAndTenant(assetID, tenantID).Return(&domain.Asset{ID: assetID}, nil)
 			},
 			wantErr: "condition tidak valid",
@@ -352,7 +365,7 @@ func TestStockOpnameUsecase_AddItem(t *testing.T) {
 				CheckedBy: checkedBy,
 			},
 			setup: func(repo *mocks.MockStockOpnameRepository, itemRepo *mocks.MockStockOpnameItemRepository, assetRepo *mocks.MockAssetRepository) {
-				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID}, nil)
+				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID, Status: domain.StockOpnameStatusDraft}, nil)
 				assetRepo.EXPECT().FindByIDAndTenant(assetID, tenantID).Return(&domain.Asset{ID: assetID}, nil)
 				itemRepo.EXPECT().Create(gomock.Any()).Return(errors.New("db error"))
 			},
@@ -367,7 +380,7 @@ func TestStockOpnameUsecase_AddItem(t *testing.T) {
 				CheckedBy: checkedBy,
 			},
 			setup: func(repo *mocks.MockStockOpnameRepository, itemRepo *mocks.MockStockOpnameItemRepository, assetRepo *mocks.MockAssetRepository) {
-				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID}, nil)
+				repo.EXPECT().FindByID(tenantID, sessionID).Return(&domain.StockOpnameSession{ID: sessionID, Status: domain.StockOpnameStatusDraft}, nil)
 				assetRepo.EXPECT().FindByIDAndTenant(assetID, tenantID).Return(&domain.Asset{ID: assetID}, nil)
 				itemRepo.EXPECT().Create(gomock.Any()).DoAndReturn(func(item *domain.StockOpnameItem) error {
 					if item.Condition != domain.StockOpnameConditionMatch {

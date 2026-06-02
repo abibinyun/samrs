@@ -5,3 +5,5 @@ postgres_data/
 uploads/
 logs/
 scripts/
+tmp/
+build-errors.log

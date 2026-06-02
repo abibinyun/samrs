@@ -1862,6 +1862,18 @@ func (mr *MockStockOpnameItemRepositoryMockRecorder) ListBySession(tenantID, ses
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBySession", reflect.TypeOf((*MockStockOpnameItemRepository)(nil).ListBySession), tenantID, sessionID)
 }
 
+func (m *MockStockOpnameItemRepository) Delete(tenantID uuid.UUID, sessionID uint, itemID uint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Delete", tenantID, sessionID, itemID)
+	err, _ := ret[0].(error)
+	return err
+}
+
+func (mr *MockStockOpnameItemRepositoryMockRecorder) Delete(tenantID, sessionID, itemID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockStockOpnameItemRepository)(nil).Delete), tenantID, sessionID, itemID)
+}
+
 type MockTenantRepository struct {
 	ctrl     *gomock.Controller
 	recorder *MockTenantRepositoryMockRecorder

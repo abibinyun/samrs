@@ -90,7 +90,7 @@ cmd_start() {
 
     case "$mode" in
         dev)
-            dc -f docker-compose.yml -f docker-compose.dev.yml up -d
+            dc -f docker-compose.yml -f docker-compose.dev.yml up -d --build
             ;;
         tools)
             dc --profile tools up -d

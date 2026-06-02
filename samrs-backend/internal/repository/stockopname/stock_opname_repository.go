@@ -32,6 +32,7 @@ type StockOpnameRepository interface {
 type StockOpnameItemRepository interface {
 	Create(item *domain.StockOpnameItem) error
 	ListBySession(tenantID uuid.UUID, sessionID uint) ([]domain.StockOpnameItem, error)
+	Delete(tenantID uuid.UUID, sessionID uint, itemID uint) error
 }
 
 type stockOpnameRepository struct {
@@ -132,6 +133,13 @@ func (r *stockOpnameItemRepository) ListBySession(tenantID uuid.UUID, sessionID 
 		return nil, err
 	}
 	return items, nil
+}
+
+func (r *stockOpnameItemRepository) Delete(tenantID uuid.UUID, sessionID uint, itemID uint) error {
+	db := repobase.NewDB(r.db).Model(&domain.StockOpnameItem{})
+	return repobase.WithTenant(db, tenantID).
+		Where("id = ? AND session_id = ?", itemID, sessionID).
+		Delete(&domain.StockOpnameItem{}).Error
 }
 
 func mapStockOpnameSortBy(sortBy string) string {

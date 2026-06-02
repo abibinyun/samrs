@@ -18,6 +18,7 @@ type StockOpnameUsecase interface {
 	UpdateSession(input StockOpnameSessionUpdateInput) (*domain.StockOpnameSession, error)
 	CloseSession(tenantID uuid.UUID, id uint) (*domain.StockOpnameSession, error)
 	AddItem(input StockOpnameItemInput) (*domain.StockOpnameItem, error)
+	DeleteItem(tenantID uuid.UUID, sessionID uint, itemID uint) error
 	ListItems(tenantID uuid.UUID, sessionID uint) ([]domain.StockOpnameItem, error)
 }
 
@@ -160,8 +161,12 @@ func (u *stockOpnameUsecase) AddItem(input StockOpnameItemInput) (*domain.StockO
 		return nil, util.ErrValidation("checked_by wajib diisi")
 	}
 
-	if _, err := u.repo.FindByID(input.TenantID, input.SessionID); err != nil {
+	session, err := u.repo.FindByID(input.TenantID, input.SessionID)
+	if err != nil {
 		return nil, util.ErrNotFound("session tidak ditemukan atau akses ditolak")
+	}
+	if session.Status != domain.StockOpnameStatusDraft {
+		return nil, util.ErrValidation("tidak dapat menambah item pada sesi yang sudah ditutup")
 	}
 	if _, err := u.assetRepo.FindByIDAndTenant(input.AssetID, input.TenantID); err != nil {
 		return nil, util.ErrNotFound("asset tidak ditemukan atau akses ditolak")
@@ -188,6 +193,17 @@ func (u *stockOpnameUsecase) AddItem(input StockOpnameItemInput) (*domain.StockO
 		return nil, err
 	}
 	return item, nil
+}
+
+func (u *stockOpnameUsecase) DeleteItem(tenantID uuid.UUID, sessionID uint, itemID uint) error {
+	session, err := u.repo.FindByID(tenantID, sessionID)
+	if err != nil {
+		return util.ErrNotFound("session tidak ditemukan atau akses ditolak")
+	}
+	if session.Status != domain.StockOpnameStatusDraft {
+		return util.ErrValidation("tidak dapat menghapus item pada sesi yang sudah ditutup")
+	}
+	return u.itemRepo.Delete(tenantID, sessionID, itemID)
 }
 
 func (u *stockOpnameUsecase) ListItems(tenantID uuid.UUID, sessionID uint) ([]domain.StockOpnameItem, error) {

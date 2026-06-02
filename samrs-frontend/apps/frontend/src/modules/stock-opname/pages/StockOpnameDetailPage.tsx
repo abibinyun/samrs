@@ -15,8 +15,9 @@ import {
   useCloseStockOpnameSessionMutation,
 } from "../actions/stockOpnameApi";
 import { stockOpnameStatus, stockOpnameCondition } from "../components/StockOpnameStatus";
+import { AssetSelect } from "../components/AssetSelect";
 import { toast } from "sonner";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { StockOpnameCondition } from "../types";
 
 export function StockOpnameDetailPage() {
@@ -38,6 +39,11 @@ export function StockOpnameDetailPage() {
   const [assetId, setAssetId] = useState("");
   const [condition, setCondition] = useState<StockOpnameCondition>("match");
   const [note, setNote] = useState("");
+
+  const excludedAssetIds = useMemo(
+    () => (items?.data ?? []).map((item) => item.asset_id),
+    [items]
+  );
 
   const handleAddItem = async () => {
     if (!assetId) return;
@@ -135,7 +141,9 @@ export function StockOpnameDetailPage() {
         <CardContent className="space-y-4">
           {data.status === "draft" && (
             <div className="flex gap-2 items-end p-4 bg-muted/50 rounded-lg">
-              <Input placeholder="Asset ID" value={assetId} onChange={(e) => setAssetId(e.target.value)} className="w-48" />
+              <div className="w-72">
+                <AssetSelect value={assetId} onChange={setAssetId} excludeIds={excludedAssetIds} />
+              </div>
               <Select value={condition} onValueChange={(v) => setCondition(v as StockOpnameCondition)}>
                 <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
                 <SelectContent>

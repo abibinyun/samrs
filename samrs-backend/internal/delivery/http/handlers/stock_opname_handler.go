@@ -307,3 +307,37 @@ func (h *StockOpnameHandler) ListItems(c *gin.Context) {
 
 	util.SuccessResponse(c, "Item ditemukan", items)
 }
+
+func (h *StockOpnameHandler) DeleteItem(c *gin.Context) {
+	tenantID, ok := httputil.TenantIDFromContext(c)
+	if !ok {
+		util.ErrorResponse(c, http.StatusUnauthorized, "Tenant ID tidak ditemukan", nil)
+		return
+	}
+
+	sessionID, err := httputil.ParseUint(c.Param("id"))
+	if err != nil {
+		util.ErrorResponseFromErr(c, "Format session ID tidak valid", err)
+		return
+	}
+
+	itemID, err := httputil.ParseUint(c.Param("itemId"))
+	if err != nil {
+		util.ErrorResponseFromErr(c, "Format item ID tidak valid", err)
+		return
+	}
+
+	if err := httputil.WithTx(c, h.db, func(tx *gorm.DB) error {
+		sessionRepo := repository.NewStockOpnameRepository(tx)
+		itemRepo := repository.NewStockOpnameItemRepository(tx)
+		assetRepo := repository.NewAssetRepository(tx)
+		stockOpnameUsecase := stockopnameusecase.NewStockOpnameUsecase(sessionRepo, itemRepo, assetRepo)
+
+		return stockOpnameUsecase.DeleteItem(tenantID, uint(sessionID), uint(itemID))
+	}); err != nil {
+		util.ErrorResponseFromErr(c, "Gagal menghapus item", err)
+		return
+	}
+
+	util.SuccessResponse(c, "Item berhasil dihapus", nil)
+}
