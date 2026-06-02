@@ -1,16 +1,30 @@
-export type ComplaintStatus = "new" | "in_progress" | "resolved" | "closed" | (string & {});
+export type ComplaintStatus = "open" | "in_progress" | "done";
 
 export type Complaint = {
   id: string;
+  tenant_id: string;
   asset_id: string;
-  asset_code: string;
-  asset_name: string;
+  reported_by: string;
+  assigned_to?: string | null;
   title: string;
   description: string;
-  status: ComplaintStatus;
   resolution_note?: string;
+  status: ComplaintStatus;
   created_at: string;
   updated_at: string;
+  asset?: {
+    id: string;
+    code: string;
+    name: string;
+  };
+  reporter?: {
+    id: string;
+    username: string;
+  };
+  assignee?: {
+    id: string;
+    username: string;
+  };
 };
 
 export type ComplaintFormData = {
@@ -20,6 +34,7 @@ export type ComplaintFormData = {
 };
 
 export type ComplaintUpdateData = {
-  status: ComplaintStatus;
+  status?: ComplaintStatus;
+  assigned_to?: string | null;
   resolution_note?: string;
 };

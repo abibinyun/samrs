@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "samrs-frontnend",
+      "dependencies": {
+        "@radix-ui/react-alert-dialog": "^1.1.15",
+      },
       "devDependencies": {
         "@types/bun": "latest",
       },

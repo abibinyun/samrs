@@ -117,12 +117,22 @@ const dashboardRoute = createRoute({
   ),
 });
 
+// Forbidden (403) Route
+const forbiddenRoute = createRoute({
+  getParentRoute: () => tenantRoute,
+  path: "forbidden",
+  component: lazyRouteComponent(() =>
+    import("../modules/dashboard/pages/ForbiddenPage")
+  ),
+});
+
 // Join all routes
 const routeTree = rootRoute.addChildren([
   indexRoute,
   loginRoute,
   tenantRoute.addChildren([
     dashboardRoute,
+    forbiddenRoute,
     ...roomRoutes,
     ...notificationRoutes,
     ...stockOpnameRoutes,

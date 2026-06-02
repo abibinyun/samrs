@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"samrs-backend/internal/domain"
+	"samrs-backend/internal/repository"
 	"samrs-backend/internal/test/mocks"
 
 	"github.com/google/uuid"
@@ -261,6 +262,142 @@ func TestComplaintUsecase_UpdateComplaint(t *testing.T) {
 			}
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
+			}
+		})
+	}
+}
+
+func TestComplaintUsecase_GetAllComplaints(t *testing.T) {
+	tenantID := uuid.New()
+
+	tests := []struct {
+		name      string
+		filter    repository.ComplaintFilter
+		setup     func(repo *mocks.MockComplaintRepository)
+		wantTotal int64
+		wantCount int
+		wantErr   string
+	}{
+		{
+			name:   "empty result",
+			filter: repository.ComplaintFilter{Page: 1, PerPage: 10},
+			setup: func(repo *mocks.MockComplaintRepository) {
+				repo.EXPECT().FindAllByTenant(tenantID, repository.ComplaintFilter{Page: 1, PerPage: 10}).
+					Return([]domain.Complaint{}, int64(0), nil)
+			},
+			wantTotal: 0,
+			wantCount: 0,
+		},
+		{
+			name:   "with results",
+			filter: repository.ComplaintFilter{Status: "open", Page: 1, PerPage: 10},
+			setup: func(repo *mocks.MockComplaintRepository) {
+				repo.EXPECT().FindAllByTenant(tenantID, repository.ComplaintFilter{Status: "open", Page: 1, PerPage: 10}).
+					Return([]domain.Complaint{
+						{ID: uuid.New(), Title: "Complaint 1"},
+						{ID: uuid.New(), Title: "Complaint 2"},
+					}, int64(2), nil)
+			},
+			wantTotal: 2,
+			wantCount: 2,
+		},
+		{
+			name:   "repo error",
+			filter: repository.ComplaintFilter{Page: 1, PerPage: 10},
+			setup: func(repo *mocks.MockComplaintRepository) {
+				repo.EXPECT().FindAllByTenant(tenantID, repository.ComplaintFilter{Page: 1, PerPage: 10}).
+					Return(nil, int64(0), errors.New("db error"))
+			},
+			wantErr: "db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			repo := mocks.NewMockComplaintRepository(ctrl)
+			assetRepo := mocks.NewMockAssetRepository(ctrl)
+			userRepo := mocks.NewMockUserRepository(ctrl)
+			if tt.setup != nil {
+				tt.setup(repo)
+			}
+			usecase := NewComplaintUsecase(repo, assetRepo, userRepo)
+			results, total, err := usecase.GetAllComplaints(tenantID, tt.filter)
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatalf("expected error %q, got nil", tt.wantErr)
+				}
+				if err.Error() != tt.wantErr {
+					t.Fatalf("expected error %q, got %q", tt.wantErr, err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if total != tt.wantTotal {
+				t.Fatalf("expected total %d, got %d", tt.wantTotal, total)
+			}
+			if len(results) != tt.wantCount {
+				t.Fatalf("expected %d results, got %d", tt.wantCount, len(results))
+			}
+		})
+	}
+}
+
+func TestComplaintUsecase_GetComplaintByID(t *testing.T) {
+	tenantID := uuid.New()
+	complaintID := uuid.New()
+
+	tests := []struct {
+		name    string
+		setup   func(repo *mocks.MockComplaintRepository)
+		wantErr string
+	}{
+		{
+			name: "not found",
+			setup: func(repo *mocks.MockComplaintRepository) {
+				repo.EXPECT().FindByIDAndTenant(complaintID, tenantID).Return(nil, errors.New("not found"))
+			},
+			wantErr: "not found",
+		},
+		{
+			name: "success",
+			setup: func(repo *mocks.MockComplaintRepository) {
+				repo.EXPECT().FindByIDAndTenant(complaintID, tenantID).
+					Return(&domain.Complaint{ID: complaintID, TenantID: tenantID, Title: "Test"}, nil)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			repo := mocks.NewMockComplaintRepository(ctrl)
+			assetRepo := mocks.NewMockAssetRepository(ctrl)
+			userRepo := mocks.NewMockUserRepository(ctrl)
+			if tt.setup != nil {
+				tt.setup(repo)
+			}
+			usecase := NewComplaintUsecase(repo, assetRepo, userRepo)
+			result, err := usecase.GetComplaintByID(tenantID, complaintID)
+			if tt.wantErr != "" {
+				if err == nil {
+					t.Fatalf("expected error %q, got nil", tt.wantErr)
+				}
+				if err.Error() != tt.wantErr {
+					t.Fatalf("expected error %q, got %q", tt.wantErr, err.Error())
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if result == nil {
+				t.Fatalf("expected complaint, got nil")
+			}
+			if result.ID != complaintID {
+				t.Fatalf("expected complaint ID %v, got %v", complaintID, result.ID)
 			}
 		})
 	}

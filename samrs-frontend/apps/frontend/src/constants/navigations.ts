@@ -3,7 +3,8 @@ import {
   MapPin, Tags, History, ShieldCheck, Bell, FormIcon,
   type LucideIcon, 
   FileCheck,
-  Landmark
+  Landmark,
+  AlertTriangle
 } from "lucide-react";
 import { SCOPES } from "./permissions";
 
@@ -72,7 +73,7 @@ export const MENU_ITEMS: MenuSection[] = [
     items: [
       { 
         label: "Keluhan (Complaint)", 
-        icon: Bell,
+        icon: AlertTriangle,
         to: "/complaints", 
         permission: SCOPES.COMPLAINT.READ 
       },

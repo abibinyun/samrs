@@ -1,4 +1,5 @@
 import { api } from "@/store/api";
+import { API_ENDPOINTS } from "@/constants/endpoints";
 import type { Complaint, ComplaintFormData, ComplaintUpdateData } from "../types";
 
 type ComplaintListResponse = {
@@ -16,8 +17,30 @@ type ComplaintResponse = {
   data: Complaint;
 };
 
+type UserOption = {
+  id: string;
+  username: string;
+};
+
+type UserListResponse = {
+  success: boolean;
+  data: UserOption[];
+  meta?: {
+    total: number;
+    page: number;
+    per_page: number;
+  };
+};
+
 export const complaintApi = api.injectEndpoints({
   endpoints: (builder) => ({
+    getUsers: builder.query<UserListResponse, void>({
+      query: () => ({
+        url: API_ENDPOINTS.USERS.BASE,
+        params: { per_page: 100 },
+      }),
+    }),
+
     getComplaints: builder.query<ComplaintListResponse, {
       page?: number;
       per_page?: number;
@@ -26,20 +49,20 @@ export const complaintApi = api.injectEndpoints({
       asset_id?: string;
     }>({
       query: (params) => ({
-        url: "/api/v1/complaints",
+        url: API_ENDPOINTS.COMPLAINTS.BASE,
         params,
       }),
       providesTags: ["Complaints"],
     }),
 
     getComplaint: builder.query<ComplaintResponse, string>({
-      query: (id) => `/api/v1/complaints/${id}`,
+      query: (id) => API_ENDPOINTS.COMPLAINTS.DETAIL(id),
       providesTags: (_result, _error, id) => [{ type: "Complaints", id }],
     }),
 
     createComplaint: builder.mutation<ComplaintResponse, ComplaintFormData>({
       query: (data) => ({
-        url: "/api/v1/complaints",
+        url: API_ENDPOINTS.COMPLAINTS.BASE,
         method: "POST",
         body: data,
       }),
@@ -48,7 +71,7 @@ export const complaintApi = api.injectEndpoints({
 
     updateComplaint: builder.mutation<ComplaintResponse, { id: string; data: ComplaintUpdateData }>({
       query: ({ id, data }) => ({
-        url: `/api/v1/complaints/${id}`,
+        url: API_ENDPOINTS.COMPLAINTS.DETAIL(id),
         method: "PATCH",
         body: data,
       }),
@@ -60,7 +83,7 @@ export const complaintApi = api.injectEndpoints({
 
     deleteComplaint: builder.mutation<{ success: boolean }, string>({
       query: (id) => ({
-        url: `/api/v1/complaints/${id}`,
+        url: API_ENDPOINTS.COMPLAINTS.DETAIL(id),
         method: "DELETE",
       }),
       invalidatesTags: ["Complaints"],
@@ -69,6 +92,7 @@ export const complaintApi = api.injectEndpoints({
 });
 
 export const {
+  useGetUsersQuery,
   useGetComplaintsQuery,
   useGetComplaintQuery,
   useCreateComplaintMutation,

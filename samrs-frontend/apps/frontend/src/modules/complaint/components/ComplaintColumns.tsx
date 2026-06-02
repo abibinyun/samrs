@@ -35,15 +35,16 @@ export function createComplaintColumns(opts: {
       },
     },
     {
-      accessorKey: "asset_name",
+      id: "asset",
       header: "Aset",
+      accessorFn: (row) => row.asset?.name ?? "-",
       cell: ({ row }) => {
         const c = row.original;
         return (
           <div>
-            <div className="text-sm">{c.asset_name}</div>
+            <div className="text-sm">{c.asset?.name || "-"}</div>
             <div className="text-xs text-muted-foreground font-mono mt-0.5">
-              {c.asset_code}
+              {c.asset?.code || "-"}
             </div>
           </div>
         );
@@ -105,7 +106,7 @@ export function createComplaintColumns(opts: {
                 <DropdownMenuItem onClick={() => opts.onUpdateStatus(c)}>
                   Update Status
                 </DropdownMenuItem>
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={() => opts.onDelete(c.id)}
                   className="text-red-600"
                 >

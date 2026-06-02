@@ -19,6 +19,10 @@ export const requirePermission = (permission: string | string[]) => {
     : permissions?.includes(permission);
   
   if (!hasPermission) {
-    throw redirect({ to: "/" });
+    const tenantSlug = user?.tenant_slug || "";
+    throw redirect({ 
+      to: "/$tenantId/forbidden", 
+      params: { tenantId: tenantSlug } 
+    });
   }
 };

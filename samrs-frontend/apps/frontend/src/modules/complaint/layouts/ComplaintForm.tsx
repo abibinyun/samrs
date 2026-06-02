@@ -1,4 +1,4 @@
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { complaintSchema, type ComplaintFormValues } from "../schemas";
 import { useCreateComplaintMutation } from "../actions/complaintApi";
@@ -6,14 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { AssetSelect } from "@/modules/stock-opname/components/AssetSelect";
 import { toast } from "sonner";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, useRouterState } from "@tanstack/react-router";
 
 export function ComplaintForm() {
   const navigate = useNavigate();
+  const basePath = useRouterState({
+    select: (s) => {
+      const parts = s.location.pathname.split("/").filter(Boolean);
+      return `/${parts[0]}`;
+    },
+  });
   const [createComplaint, { isLoading }] = useCreateComplaintMutation();
-  
-  const { register, handleSubmit, formState: { errors } } = useForm<ComplaintFormValues>({
+
+  const { register, handleSubmit, control, formState: { errors } } = useForm<ComplaintFormValues>({
     resolver: zodResolver(complaintSchema),
   });
 
@@ -21,8 +28,8 @@ export function ComplaintForm() {
     try {
       await createComplaint(data).unwrap();
       toast.success("Keluhan berhasil dibuat");
-      navigate({ to: "/complaints" });
-    } catch (error) {
+      navigate({ to: `${basePath}/complaints` });
+    } catch {
       toast.error("Gagal membuat keluhan");
     }
   };
@@ -30,8 +37,14 @@ export function ComplaintForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <Label htmlFor="asset_id">Asset ID</Label>
-        <Input id="asset_id" {...register("asset_id")} />
+        <Label>Aset</Label>
+        <Controller
+          control={control}
+          name="asset_id"
+          render={({ field }) => (
+            <AssetSelect value={field.value} onChange={field.onChange} />
+          )}
+        />
         {errors.asset_id && (
           <p className="text-sm text-red-600 mt-1">{errors.asset_id.message}</p>
         )}
@@ -39,7 +52,7 @@ export function ComplaintForm() {
 
       <div>
         <Label htmlFor="title">Judul</Label>
-        <Input id="title" {...register("title")} />
+        <Input id="title" {...register("title")} placeholder="Judul keluhan" />
         {errors.title && (
           <p className="text-sm text-red-600 mt-1">{errors.title.message}</p>
         )}
@@ -47,7 +60,7 @@ export function ComplaintForm() {
 
       <div>
         <Label htmlFor="description">Deskripsi</Label>
-        <Textarea id="description" {...register("description")} rows={5} />
+        <Textarea id="description" {...register("description")} rows={5} placeholder="Jelaskan masalah yang terjadi..." />
         {errors.description && (
           <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
         )}
@@ -60,7 +73,7 @@ export function ComplaintForm() {
         <Button
           type="button"
           variant="outline"
-          onClick={() => navigate({ to: "/complaints" })}
+          onClick={() => navigate({ to: `${basePath}/complaints` })}
         >
           Batal
         </Button>

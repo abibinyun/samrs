@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/routeGuard";
 import { SCOPES } from "@/constants";
 import { ComplaintListPage } from "./pages/ComplaintListPage";
 import { ComplaintCreatePage } from "./pages/ComplaintCreatePage";
+import { ComplaintDetailPage } from "./pages/ComplaintDetailPage";
 
 export const complaintListRoute = createRoute({
   getParentRoute: () => tenantRoute,
@@ -19,4 +20,11 @@ export const complaintCreateRoute = createRoute({
   component: ComplaintCreatePage,
 });
 
-export const complaintRoutes = [complaintListRoute, complaintCreateRoute];
+export const complaintDetailRoute = createRoute({
+  getParentRoute: () => tenantRoute,
+  path: "complaints/$complaintId",
+  beforeLoad: () => requirePermission(SCOPES.COMPLAINT.READ),
+  component: ComplaintDetailPage,
+});
+
+export const complaintRoutes = [complaintListRoute, complaintCreateRoute, complaintDetailRoute];
