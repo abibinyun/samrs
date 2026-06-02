@@ -1,5 +1,5 @@
 import { api } from "@/store/api";
-import type { MaintenanceSchedule, MaintenanceFormData } from "../types";
+import type { MaintenanceSchedule, MaintenanceDocument, MaintenanceFormData } from "../types";
 
 type MaintenanceListResponse = {
   success: boolean;
@@ -14,6 +14,16 @@ type MaintenanceListResponse = {
 type MaintenanceResponse = {
   success: boolean;
   data: MaintenanceSchedule;
+};
+
+type DocumentListResponse = {
+  success: boolean;
+  data: MaintenanceDocument[];
+};
+
+type DocumentResponse = {
+  success: boolean;
+  data: MaintenanceDocument;
 };
 
 export const maintenanceApi = api.injectEndpoints({
@@ -77,6 +87,36 @@ export const maintenanceApi = api.injectEndpoints({
       }),
       invalidatesTags: ["Maintenance"],
     }),
+
+    // Document endpoints
+    getDocuments: builder.query<DocumentListResponse, number>({
+      query: (scheduleId) => ({
+        url: `/api/v1/maintenance-schedules/${scheduleId}/documents`,
+      }),
+      providesTags: ["MaintenanceDocuments"],
+    }),
+
+    uploadDocument: builder.mutation<DocumentResponse, { scheduleId: number; docType: string; file: File }>({
+      query: ({ scheduleId, docType, file }) => {
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("doc_type", docType);
+        return {
+          url: `/api/v1/maintenance-schedules/${scheduleId}/documents`,
+          method: "POST",
+          body: formData,
+        };
+      },
+      invalidatesTags: ["MaintenanceDocuments"],
+    }),
+
+    deleteDocument: builder.mutation<{ success: boolean }, number>({
+      query: (id) => ({
+        url: `/api/v1/maintenance-documents/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["MaintenanceDocuments"],
+    }),
   }),
 });
 
@@ -87,4 +127,7 @@ export const {
   useUpdateMaintenanceScheduleMutation,
   useCompleteMaintenanceScheduleMutation,
   useDeleteMaintenanceScheduleMutation,
+  useGetDocumentsQuery,
+  useUploadDocumentMutation,
+  useDeleteDocumentMutation,
 } = maintenanceApi;

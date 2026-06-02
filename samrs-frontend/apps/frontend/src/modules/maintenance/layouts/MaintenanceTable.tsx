@@ -6,11 +6,12 @@ type MaintenanceTableProps = {
   data: MaintenanceSchedule[];
   isLoading?: boolean;
   onComplete: (schedule: MaintenanceSchedule) => void;
+  onView: (schedule: MaintenanceSchedule) => void;
   onUpdate: (schedule: MaintenanceSchedule) => void;
   onDelete: (id: number) => void;
 };
 
-export function MaintenanceTable({ data, isLoading, onComplete, onUpdate, onDelete }: MaintenanceTableProps) {
-  const columns = createMaintenanceColumns({ onComplete, onUpdate, onDelete });
+export function MaintenanceTable({ data, isLoading, onComplete, onView, onUpdate, onDelete }: MaintenanceTableProps) {
+  const columns = createMaintenanceColumns({ onComplete, onView, onUpdate, onDelete });
   return <DataTable columns={columns} data={data} isLoading={isLoading} enableRowSelection={false} />;
 }

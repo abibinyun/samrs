@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { MoreVertical, CheckCircle, Calendar } from "lucide-react";
+import { MoreVertical, CheckCircle, Calendar, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { MaintenanceSchedule } from "../types";
 import { maintenanceStatus } from "./MaintenanceStatus";
@@ -10,6 +10,7 @@ import { id as idLocale } from "date-fns/locale";
 
 export function createMaintenanceColumns(opts: {
   onComplete: (schedule: MaintenanceSchedule) => void;
+  onView: (schedule: MaintenanceSchedule) => void;
   onUpdate: (schedule: MaintenanceSchedule) => void;
   onDelete: (id: number) => void;
 }): ColumnDef<MaintenanceSchedule, unknown>[] {
@@ -89,6 +90,9 @@ export function createMaintenanceColumns(opts: {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => opts.onView(m)}>
+                  <Eye className="w-4 h-4 mr-2" /> Detail
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => opts.onUpdate(m)}>Edit</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => opts.onDelete(m.id)} className="text-red-600">Hapus</DropdownMenuItem>
               </DropdownMenuContent>
